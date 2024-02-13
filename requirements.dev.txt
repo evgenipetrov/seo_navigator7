@@ -4,6 +4,7 @@ flake8
 mypy
 
 django-stubs
+pandas-stubs
 
 pytest
 pytest-django
