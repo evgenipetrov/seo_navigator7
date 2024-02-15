@@ -46,9 +46,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "cli",
-    "models.core.project",
-    "models.core.website",
-    "models.core.url",
+    "model.core.project",
+    "model.core.website",
+    "model.core.url",
 ]
 
 MIDDLEWARE = [
@@ -132,7 +132,7 @@ STATIC_URL = "static/"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+DEFAULT_AUTO_FIELD = "django.db.model.BigAutoField"
 
 LOGGING = {
     "version": 1,
@@ -157,3 +157,5 @@ LOGGING = {
 # Get SECRETS_DIR_NAME from environment variables
 SECRETS_DIR_NAME = os.getenv("SECRETS_DIR_NAME", "secrets")
 SECRETS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", SECRETS_DIR_NAME))
+
+MAX_EXPORT_AGE_DAYS = 1
