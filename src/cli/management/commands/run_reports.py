@@ -26,10 +26,10 @@ class Command(BaseCommand):
         if project_name:
             logger.info(f"Starting to run reports for project {project_name}")
         else:
-            project_model_manager = ProjectModelManager()
+            project_model_manager: ProjectModelManager = ProjectModelManager()
             projects = project_model_manager.get_all()
             for project in projects:
                 logger.info(f"Starting to run reports for project {project.name}")
                 # Run reports for project
                 ReportRunner.run(project)
-        self.stdout.write(self.style.SUCCESS(f"Reports run complete."))
+        self.stdout.write(self.style.SUCCESS("Reports run complete."))

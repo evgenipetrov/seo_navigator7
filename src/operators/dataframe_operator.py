@@ -5,7 +5,7 @@ import pandas as pd
 
 class DataFrameOperator:
     @staticmethod
-    def merge_csv(directory):
+    def merge_csv(directory: str) -> pd.DataFrame:
         """Merge all CSV files in the specified directory into a single DataFrame."""
         csv_files = [f for f in os.listdir(directory) if f.endswith(".csv")]
         if not csv_files:

@@ -1,19 +1,23 @@
 import os
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
+from typing import Any
 
 import pandas as pd
 from django.conf import settings
 
+from model.core.project.models import ProjectModel
 from operators.dataframe_operator import DataFrameOperator
 
 
 class BaseExport(ABC):
-    def __init__(self, project, **kwargs):
+
+    def __init__(self, project: ProjectModel, **kwargs: Any):
         self.project = project
         self.kwargs = kwargs
-        self._data = None
-        self._temp_data = None
+
+        self._data = pd.DataFrame()
+        self._temp_data = pd.DataFrame()
 
         # Set up paths for temporary data and final export
         self.temp_path = os.path.join(project.data_folder, "temp")
@@ -25,32 +29,32 @@ class BaseExport(ABC):
 
     @property
     @abstractmethod
-    def export_name(self):
+    def export_name(self) -> str:
         """A unique name for the export type."""
         pass
 
     @property
     @abstractmethod
-    def is_manual(self):
+    def is_manual(self) -> bool:
         """Flag to indicate if the export requires manual intervention."""
         pass
 
     @abstractmethod
-    def _prepare(self):
+    def _prepare(self) -> None:
         """Prepare the environment or settings for the export."""
         pass
 
     @abstractmethod
-    def _execute(self):
+    def _execute(self) -> None:
         """Execute the main export routine, possibly populating self._temp_data."""
         pass
 
     @abstractmethod
-    def _finalize(self):
+    def _finalize(self) -> None:
         """Finalize and possibly transform self._temp_data post-export."""
         pass
 
-    def _save(self):
+    def _save(self) -> None:
         """Save the finalized data to a CSV file in the export directory."""
         if self._temp_data is not None:
             # Ensure the directory exists
@@ -60,7 +64,7 @@ class BaseExport(ABC):
         else:
             print(f"No data to save for '{self.export_name}' export.")
 
-    def _run(self):
+    def _run(self) -> None:
         """Orchestrate the export process by calling the defined methods in order."""
         self._prepare()
         self._execute()
@@ -76,13 +80,13 @@ class BaseExport(ABC):
         self._save()
 
     @staticmethod
-    def _needs_refresh(filepath, max_age_days=settings.MAX_EXPORT_AGE_DAYS):
+    def _needs_refresh(filepath: str, max_age_days: int = settings.MAX_EXPORT_AGE_DAYS) -> bool:
         last_modified = datetime.fromtimestamp(os.path.getmtime(filepath))
         cutoff = datetime.now() - timedelta(days=max_age_days)
         return last_modified < cutoff
 
-    def get_data(self):
-        if self._data is not None:
+    def get_data(self) -> pd.DataFrame:
+        if not self._data.empty:
             return self._data
 
         if os.path.exists(self.save_path):

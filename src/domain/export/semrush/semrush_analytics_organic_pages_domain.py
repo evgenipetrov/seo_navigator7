@@ -1,3 +1,5 @@
+from typing import List
+
 from domain.export.semrush.base_semrush_export import BaseSemrushExport
 
 
@@ -12,18 +14,18 @@ class SemrushAnalyticsOrganicPagesDomainExport(BaseSemrushExport):
     ]
 
     @property
-    def export_name(self):
+    def export_name(self) -> str:
         return self._EXPORT_NAME
 
     @property
-    def url_template(self):
+    def url_template(self) -> str:
         return self._URL_TEMPLATE
 
     @property
-    def instruction(self):
+    def instruction(self) -> List[str]:
         return self._INSTRUCTION
 
-    def _prepare(self):
+    def _prepare(self) -> None:
         project_url = self.project.website.root_url
 
         formatted_url = self.url_template.format(project_url)
@@ -37,9 +39,9 @@ class SemrushAnalyticsOrganicPagesDomainExport(BaseSemrushExport):
 
         print("\n".join(formatted_instructions))
 
-    def _execute(self):
+    def _execute(self) -> None:
         pass
 
-    def _finalize(self):
+    def _finalize(self) -> None:
         # Any finalization steps, if needed
         print("Finalizing the data post-manual export...")
