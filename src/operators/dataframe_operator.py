@@ -1,6 +1,9 @@
+import logging
 import os
 
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 class DataFrameOperator:
@@ -9,6 +12,7 @@ class DataFrameOperator:
         """Merge all CSV files in the specified directory into a single DataFrame."""
         csv_files = [f for f in os.listdir(directory) if f.endswith(".csv")]
         if not csv_files:
+            logger.warning("No CSV files found in the directory.")
             raise FileNotFoundError("No CSV files found in the directory.")
 
         dataframes = []
@@ -16,12 +20,16 @@ class DataFrameOperator:
             try:
                 df = pd.read_csv(os.path.join(directory, f))
                 dataframes.append(df)
+                logger.info(f"Successfully read CSV file {f}")
             except pd.errors.EmptyDataError:
-                print(f"Warning: '{f}' is empty and will be skipped.")
+                logger.warning(f"Warning: '{f}' is empty and will be skipped.")
             except pd.errors.ParserError as e:
-                print(f"Error reading '{f}': {e}. File will be skipped.")
+                logger.error(f"Error reading '{f}': {e}. File will be skipped.")
 
         if not dataframes:
+            logger.info("No dataframes were created. Returning an empty dataframe.")
             return pd.DataFrame()
 
-        return pd.concat(dataframes, ignore_index=True)
+        merged_df = pd.concat(dataframes, ignore_index=True)
+        logger.info("Successfully merged all CSV files.")
+        return merged_df

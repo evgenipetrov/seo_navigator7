@@ -1,16 +1,21 @@
+import logging
 from abc import ABC, abstractmethod
+
+import pandas as pd
 
 from domain.export.export_manager import ExportManager
 from model.core.project.models import ProjectModel
+
+logger = logging.getLogger(__name__)
 
 
 class BaseReport(ABC):
     def __init__(self, project: ProjectModel):
         self.project = project
         self.export_manager = ExportManager(project)
-        self.collected_data = None
-        self.prepared_data = None
-        self.processed_data = None
+        self._export_data = {}
+        self._report_base = pd.DataFrame()
+        self._report_data = pd.DataFrame()
 
     def generate(self) -> None:
         self._collect_data()
