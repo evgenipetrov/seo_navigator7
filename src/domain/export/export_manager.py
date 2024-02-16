@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ExportManager:
 
     AVAILABLE_EXPORTS: Dict[str, Type[BaseExport]] = {
-        "raw_page_data": RawPageDataExport,
+        "url_inventory_report": RawPageDataExport,
         "semrush_analytics_organic_pages_domain": SemrushAnalyticsOrganicPagesDomainExport,
         "semrush_analytics_organic_positions_domain": SemrushAnalyticsOrganicPositionsDomainExport,
         "semrush_analytics_backlinks_backlinks_domain": SemrushAnalyticsBacklinksBacklinksDomainExport,

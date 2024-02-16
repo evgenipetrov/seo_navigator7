@@ -1,8 +1,10 @@
 import logging
 from abc import ABC, abstractmethod
+from typing import Dict, Type
 
 import pandas as pd
 
+from domain.export.base_export import BaseExport
 from domain.export.export_manager import ExportManager
 from model.core.project.models import ProjectModel
 
@@ -13,7 +15,7 @@ class BaseReport(ABC):
     def __init__(self, project: ProjectModel):
         self.project = project
         self.export_manager = ExportManager(project)
-        self._export_data = {}
+        self._export_data: Dict[str, Type[BaseExport]] = {}
         self._report_base = pd.DataFrame()
         self._report_data = pd.DataFrame()
 

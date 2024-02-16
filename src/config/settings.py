@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     "model.core.project",
     "model.core.website",
     "model.core.url",
-    "model.report.raw_page_data",
+    "model.report.url_inventory_report",
 ]
 
 MIDDLEWARE = [

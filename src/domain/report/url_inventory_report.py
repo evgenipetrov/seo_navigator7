@@ -4,7 +4,7 @@ import pandas as pd
 
 from domain.report.base_report import BaseReport
 from model.core.project.models import ProjectModel
-from model.report.raw_page_data.models import RawPageDataModelManager
+from model.report.url_inventory_report.models import RawPageDataModelManager
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +26,10 @@ class UrlInventoryReport(BaseReport):
 
         unique_urls = list(set(urls))
         self._report_base = pd.DataFrame(unique_urls, columns=["BASE_URL"])
-        self._export_data["raw_page_data"] = self.export_manager.get_data("raw_page_data", urls=unique_urls)
+        self._export_data["url_inventory_report"] = self.export_manager.get_data("url_inventory_report", urls=unique_urls)
 
     def _process_data(self) -> None:
-        self._report_data = self._report_base.merge(self._export_data["raw_page_data"], left_on="BASE_URL", right_on="request_url", how="left")
+        self._report_data = self._report_base.merge(self._export_data["url_inventory_report"], left_on="BASE_URL", right_on="request_url", how="left")
 
     def _finalize(self) -> None:
         # Drop all columns that start with "BASE_"
