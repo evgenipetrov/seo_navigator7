@@ -1,3 +1,6 @@
 django
 pandas
 python-dotenv
+selenium
+selenium-wire
+webdriver-manager

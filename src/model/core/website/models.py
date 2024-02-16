@@ -1,38 +1,26 @@
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from django.db import models
 
 from model.base_model_manager import BaseModelManager
-from model.core.url.models import UrlModel, UrlModelManager
+from model.core.url.models import UrlModel
 
 logger = logging.getLogger(__name__)
 
 
 class WebsiteModelManager(BaseModelManager):
     @staticmethod
-    def push(**kwargs: Any) -> "WebsiteModel":
-        base_url: Optional[str] = kwargs.pop("base_url", None)
-        sitemap_url: Optional[str] = kwargs.pop("sitemap_url", None)
-
-        if base_url is not None:
-            root_url = UrlModelManager.get_root_url(base_url)
-            root_url_kwargs: Dict[str, Any] = {"full_address": root_url}
-            root_url_model: UrlModel = UrlModelManager.push(**root_url_kwargs)
-
-            # Ensure no None values are passed in **kwargs
-            sitemap_url_kwargs: Dict[str, Any] = {"full_address": sitemap_url} if sitemap_url else {}
-            sitemap_url_model: Optional[UrlModel] = UrlModelManager.push(**sitemap_url_kwargs) if sitemap_url_kwargs else None
-            kwargs["root_url"] = root_url_model
-            kwargs["sitemap_url"] = sitemap_url_model
-
-        identifying_fields: Dict[str, Any] = {"root_url": kwargs.pop("root_url")}
+    def push(**kwargs: Dict[str, Any]) -> "WebsiteModel":
+        identifying_fields: Dict[str, Any] = {
+            "root_url": kwargs.pop("root_url"),
+        }
         website, created = WebsiteModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
-            logger.info(f"Website {website.root_url.full_address} created successfully.")
+            logger.debug(f"Website {website} created successfully.")
         else:
-            logger.info(f"Website {website.root_url.full_address} updated successfully.")
+            logger.debug(f"Website {website} updated successfully.")
 
         return website
 
@@ -42,22 +30,19 @@ class WebsiteModelManager(BaseModelManager):
 
 
 class WebsiteModel(models.Model):
-    # relations
-    root_url = models.OneToOneField(UrlModel, on_delete=models.CASCADE, related_name="root_url")
+    # required relations
+    root_url = models.OneToOneField(UrlModel, on_delete=models.CASCADE, related_name="root_url")  # required
     sitemap_url = models.ForeignKey(UrlModel, on_delete=models.CASCADE, related_name="sitemap_url", null=True, blank=True)
-
+    # required fields
+    # optional fields
     # system attributes
     created_at = models.DateTimeField(auto_now_add=True)  # auto
     updated_at = models.DateTimeField(auto_now=True)  # auto
-
-    # managers
+    # model manager
     objects: models.Manager = WebsiteModelManager()
 
     def __str__(self) -> str:
-        return self.root_url.full_address
+        return f"WebsiteModel: root_url = {self.root_url}"
 
     class Meta:
-        verbose_name = "Website"
-        verbose_name_plural = "Websites"
-
         db_table = "core_websites"

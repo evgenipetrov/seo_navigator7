@@ -21,6 +21,7 @@ class BaseReport(ABC):
         self._collect_data()
         self._prepare_data()
         self._process_data()
+        self._finalize()
         self._save_data()
 
     @abstractmethod
@@ -37,6 +38,11 @@ class BaseReport(ABC):
     def _process_data(self) -> None:
         """Process self.prepared_data to generate the report's results, storing in self.processed_data."""
         # Example: self.processed_data = some_processing_function(self.prepared_data)
+
+    @abstractmethod
+    def _finalize(self) -> None:
+        """Perform any final processing or cleanup of self.processed_data."""
+        # Example: self.processed_data = some_final_processing_function(self.processed_data)
 
     @abstractmethod
     def _save_data(self) -> None:

@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class CliConfig(AppConfig):
+class RawPageDataConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "cli"
+    name = "model.report.raw_page_data"

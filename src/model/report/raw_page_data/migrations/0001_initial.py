@@ -9,12 +9,13 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ("project", "0001_initial"),
         ("url", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="WebsiteModel",
+            name="RawPageDataModel",
             fields=[
                 (
                     "id",
@@ -25,29 +26,41 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
+                ("status_code", models.IntegerField()),
+                (
+                    "page_content_file",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
-                    "root_url",
-                    models.OneToOneField(
+                    "project",
+                    models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="root_url",
+                        related_name="project",
+                        to="project.projectmodel",
+                    ),
+                ),
+                (
+                    "request_url",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="request_url",
                         to="url.urlmodel",
                     ),
                 ),
                 (
-                    "sitemap_url",
+                    "response_url",
                     models.ForeignKey(
-                        blank=True,
-                        null=True,
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="sitemap_url",
+                        related_name="response_url",
                         to="url.urlmodel",
                     ),
                 ),
             ],
             options={
-                "db_table": "core_websites",
+                "db_table": "report_raw_page_data",
+                "unique_together": {("project", "request_url")},
             },
         ),
     ]

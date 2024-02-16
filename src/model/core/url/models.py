@@ -17,9 +17,9 @@ class UrlModelManager(BaseModelManager):
         url, created = UrlModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
-            logger.info(f"Url {url.full_address} created successfully.")
+            logger.debug(f"Url {url.full_address} created successfully.")
         else:
-            logger.info(f"Url {url.full_address} updated successfully.")
+            logger.debug(f"Url {url.full_address} updated successfully.")
 
         return url
 
@@ -30,23 +30,23 @@ class UrlModelManager(BaseModelManager):
     @staticmethod
     def get_root_url(url: str) -> str:
         parsed_url = urlparse(url)
-        root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-        return root_url
+        root_url_str = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        return root_url_str
 
 
 class UrlModel(models.Model):
-    # fields
-    full_address = models.URLField(max_length=200, unique=True)
-
+    # required relations
+    # required fields
+    full_address = models.URLField(max_length=200, unique=True)  # required
+    # optional fields
     # system attributes
     created_at = models.DateTimeField(auto_now_add=True)  # auto
     updated_at = models.DateTimeField(auto_now=True)  # auto
-
-    # managers
+    # model manager
     objects: models.Manager = UrlModelManager()
 
     def __str__(self) -> str:
-        return str(self.full_address)
+        return f"UrlModel: full_address = {self.full_address}"
 
     class Meta:
         verbose_name = "Url"

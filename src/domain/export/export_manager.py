@@ -4,6 +4,7 @@ from typing import Any, Dict, Type
 import pandas as pd
 
 from domain.export.base_export import BaseExport
+from domain.export.page.raw_page_data_export import RawPageDataExport
 from domain.export.semrush.semrush_analytics_backlinks_backlinks_domain_export import SemrushAnalyticsBacklinksBacklinksDomainExport
 from domain.export.semrush.semrush_analytics_organic_pages_domain_export import SemrushAnalyticsOrganicPagesDomainExport
 from domain.export.semrush.semrush_analytics_organic_positions_domain_export import SemrushAnalyticsOrganicPositionsDomainExport
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 class ExportManager:
 
     AVAILABLE_EXPORTS: Dict[str, Type[BaseExport]] = {
+        "raw_page_data": RawPageDataExport,
         "semrush_analytics_organic_pages_domain": SemrushAnalyticsOrganicPagesDomainExport,
         "semrush_analytics_organic_positions_domain": SemrushAnalyticsOrganicPositionsDomainExport,
         "semrush_analytics_backlinks_backlinks_domain": SemrushAnalyticsBacklinksBacklinksDomainExport,

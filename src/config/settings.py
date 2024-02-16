@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "model.core.project",
     "model.core.website",
     "model.core.url",
+    "model.report.raw_page_data",
 ]
 
 MIDDLEWARE = [
@@ -132,7 +133,7 @@ STATIC_URL = "static/"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = "django.db.model.BigAutoField"
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGGING = {
     "version": 1,
