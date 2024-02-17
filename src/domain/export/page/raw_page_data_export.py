@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 class RawPageDataExport(BaseExport):
-
     _EXPORT_NAME = "page_data"
     _IS_MANUAL = False
 

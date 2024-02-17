@@ -18,11 +18,13 @@ class UrlInventoryReport(BaseReport):
         self._export_data["semrush_analytics_organic_pages_domain"] = self.export_manager.get_data("semrush_analytics_organic_pages_domain")
         self._export_data["semrush_analytics_organic_positions_domain"] = self.export_manager.get_data("semrush_analytics_organic_positions_domain")
         self._export_data["semrush_analytics_backlinks_backlinks_domain"] = self.export_manager.get_data("semrush_analytics_backlinks_backlinks_domain")
+        self._export_data["screamingfrog_spider_crawl_export"] = self.export_manager.get_data("screamingfrog_spider_crawl_export")
 
     def _prepare_data(self) -> None:
         urls = self._export_data["semrush_analytics_organic_pages_domain"]["URL"].tolist()
         urls.extend(self._export_data["semrush_analytics_organic_positions_domain"]["URL"].tolist())
         urls.extend(self._export_data["semrush_analytics_backlinks_backlinks_domain"]["Target url"].tolist())
+        urls.extend(self._export_data["screamingfrog_spider_crawl_export"]["Address"].tolist())
 
         unique_urls = list(set(urls))
         self._report_base = pd.DataFrame(unique_urls, columns=["BASE_URL"])

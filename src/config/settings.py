@@ -160,3 +160,6 @@ SECRETS_DIR_NAME = os.getenv("SECRETS_DIR_NAME", "secrets")
 SECRETS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", SECRETS_DIR_NAME))
 
 MAX_EXPORT_AGE_DAYS = 1
+
+SCREAMINGFROG_IMAGE_NAME = os.getenv("DOCKER_IMAGE_NAME", "screamingfrog")
+SCREAMINGFROG_IMAGE_TAG = os.getenv("SEO_SPIDER_VERSION", "latest")
