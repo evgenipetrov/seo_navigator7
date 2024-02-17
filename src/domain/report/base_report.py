@@ -60,8 +60,9 @@ class BaseReport(ABC):
 
     def _save_data(self) -> None:
         self._update_db()
-        logger.info(f"Report for project {self.project.name} saved successfully.")
+        logger.info(f"[database updated] {self.project.name}")
         self._dump_report()
+        logger.info(f"[report saved] {self.save_path}")
 
     def generate(self) -> None:
         self._collect_data()
