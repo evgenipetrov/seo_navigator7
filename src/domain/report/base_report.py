@@ -1,4 +1,5 @@
 import logging
+import os
 from abc import ABC, abstractmethod
 from typing import Dict, Type
 
@@ -19,12 +20,15 @@ class BaseReport(ABC):
         self._report_base = pd.DataFrame()
         self._report_data = pd.DataFrame()
 
-    def generate(self) -> None:
-        self._collect_data()
-        self._prepare_data()
-        self._process_data()
-        self._finalize()
-        self._save_data()
+        self.save_path = os.path.join(project.data_folder, "reports", self.report_name + ".csv")
+
+        # Ensure temp and export directories exist
+        os.makedirs(os.path.dirname(self.save_path), exist_ok=True)
+
+    @property
+    @abstractmethod
+    def report_name(self) -> str:
+        pass
 
     @abstractmethod
     def _collect_data(self) -> None:
@@ -47,6 +51,21 @@ class BaseReport(ABC):
         # Example: self.processed_data = some_final_processing_function(self.processed_data)
 
     @abstractmethod
-    def _save_data(self) -> None:
+    def _update_db(self) -> None:
         """Save self.processed_data, the final results of the report."""
         # Example: save_to_database(self.processed_data)
+
+    def _dump_report(self) -> None:
+        self._report_data.to_csv(self.save_path, index=False)
+
+    def _save_data(self) -> None:
+        self._update_db()
+        logger.info(f"Report for project {self.project.name} saved successfully.")
+        self._dump_report()
+
+    def generate(self) -> None:
+        self._collect_data()
+        self._prepare_data()
+        self._process_data()
+        self._finalize()
+        self._save_data()

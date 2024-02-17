@@ -11,9 +11,15 @@ logger = logging.getLogger(__name__)
 
 
 class UrlInventoryReport(BaseReport):
+    _REPORT_NAME = "url_inventory_report"
+
     def __init__(self, project: ProjectModel):
         super().__init__(project)
         self.url_inventory = None
+
+    @property
+    def report_name(self) -> str:
+        return self._REPORT_NAME
 
     def _collect_data(self) -> None:
         self._export_data["semrush_analytics_organic_pages_domain"] = self.export_manager.get_data("semrush_analytics_organic_pages_domain")
@@ -53,7 +59,7 @@ class UrlInventoryReport(BaseReport):
         base_columns = [col for col in self._report_data.columns if col.startswith("BASE_")]
         self._report_data.drop(columns=base_columns, inplace=True)
 
-    def _save_data(self) -> None:
+    def _update_db(self) -> None:
         for index, row in self._report_data.iterrows():
             arguments = row.to_dict()
             arguments["project"] = self.project
