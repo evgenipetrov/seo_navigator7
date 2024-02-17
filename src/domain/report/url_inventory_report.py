@@ -4,6 +4,7 @@ import pandas as pd
 
 from domain.report.base_report import BaseReport
 from model.core.project.models import ProjectModel
+from model.core.url.models import UrlModelManager
 from model.report.url_inventory_report.models import UrlInventoryReportModelManager
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ class UrlInventoryReport(BaseReport):
         self._export_data["screamingfrog_spider_crawl_export"] = self.export_manager.get_data("screamingfrog_spider_crawl_export")
         self._export_data["screamingfrog_sitemap_crawl_export"] = self.export_manager.get_data("screamingfrog_sitemap_crawl_export")
         self._export_data["googleanalytics_months_14_to_0_export"] = self.export_manager.get_data("googleanalytics_months_14_to_0_export")
+        self._export_data["googleasearchconsole_page_months_16_to_0_export"] = self.export_manager.get_data("googleasearchconsole_page_months_16_to_0_export")
 
     def _prepare_data(self) -> None:
         urls = []
@@ -30,13 +32,16 @@ class UrlInventoryReport(BaseReport):
         urls.extend(self._export_data["screamingfrog_spider_crawl_export"]["Address"].tolist())
         urls.extend(self._export_data["screamingfrog_sitemap_crawl_export"]["Address"].tolist())
         urls.extend(self._export_data["googleanalytics_months_14_to_0_export"]["FULL_ADDRESS"].tolist())
+        urls.extend(self._export_data["googleasearchconsole_page_months_16_to_0_export"]["page"].tolist())
         # prepare for final list crawl
         unique_urls = list(set(urls))
+        unique_urls = [url for url in unique_urls if not UrlModelManager.is_fragmented(url)]  # drop fragmented urls
         self._export_data["screamingfrog_list_crawl_export"] = self.export_manager.get_data("screamingfrog_list_crawl_export", urls=unique_urls)
         # collect list crawl data
         urls.extend(self._export_data["screamingfrog_list_crawl_export"]["Address"].tolist())
         # set report base
         unique_urls = list(set(urls))
+        unique_urls = [url for url in unique_urls if not UrlModelManager.is_fragmented(url)]  # drop fragmented urls
         self._report_base = pd.DataFrame(unique_urls, columns=["BASE_URL"])
         self._export_data["url_inventory_report"] = self.export_manager.get_data("url_inventory_report", urls=unique_urls)
 

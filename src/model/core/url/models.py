@@ -37,6 +37,10 @@ class UrlModelManager(BaseModelManager):
     def get_full_address(root_url: str, path: str) -> str:
         return urljoin(root_url, path)
 
+    @staticmethod
+    def is_fragmented(url: str) -> bool:
+        return bool(urlparse(url).fragment)
+
 
 class UrlModel(models.Model):
     # required relations

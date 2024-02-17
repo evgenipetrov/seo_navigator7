@@ -18,7 +18,7 @@ class SemrushAnalyticsOrganicPagesDomainExport(BaseSemrushExport):
         return self._URL_TEMPLATE
 
     def _print_instructions(self) -> None:
-        project_url = self.project.website.root_url
+        project_url = self.project.website.root_url.full_address
 
         formatted_url = self.url_template.format(project_url)
 

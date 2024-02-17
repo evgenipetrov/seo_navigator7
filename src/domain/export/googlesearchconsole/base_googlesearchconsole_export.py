@@ -8,31 +8,16 @@ from dateutil.relativedelta import relativedelta
 from domain.export.base_export import BaseExport
 from model.core.project.models import ProjectModel
 from model.core.url.models import UrlModelManager
-from operators.google_analytics_operator import GoogleAnalyticsOperator
+from operators.google_search_console_operator import GoogleSearchConsoleOperator
 
 logger = logging.getLogger(__name__)
 
 
-class BaseGoogleAnalyticsExport(BaseExport):
-
-    _DIMENSIONS = [
-        {"name": "pagePath"},
-        {"name": "sessionDefaultChannelGrouping"},
-    ]
-    _METRICS = [
-        {"name": "sessions"},
-        {"name": "activeUsers"},
-        {"name": "averageSessionDuration"},
-        {"name": "bounceRate"},
-        {"name": "engagedSessions"},
-        {"name": "totalRevenue"},
-        {"name": "conversions"},
-    ]
-
+class BaseGoogleSearchConsoleExport(BaseExport):
     def __init__(self, project: ProjectModel, **kwargs: Any) -> None:
         super().__init__(project, **kwargs)
-        self._googleanalytics_operator = GoogleAnalyticsOperator()
-        self._base_date = datetime.today() - timedelta(days=3)  # The earliest point in time we can have complete GA4 data
+        self._googlesearchconsole_operator = GoogleSearchConsoleOperator()
+        self._base_date = datetime.today() - timedelta(days=3)  # The earliest point in time we can have complete GSC data
 
     @property
     def is_manual(self) -> bool:
@@ -56,6 +41,12 @@ class BaseGoogleAnalyticsExport(BaseExport):
         """Flag to indicate if the export requires manual intervention."""
         pass
 
+    @property
+    @abstractmethod
+    def dimensions(self) -> str:
+        """Flag to indicate if the export requires manual intervention."""
+        pass
+
     def _cleanup(self) -> None:
         pass
 
@@ -72,15 +63,14 @@ class BaseGoogleAnalyticsExport(BaseExport):
         pass
 
     def _execute(self) -> None:
-        self._googleanalytics_operator.set_credentials(self.project.ga4_auth_email)
-        self._temp_data = self._googleanalytics_operator.fetch_data(
-            ga_property_id=self.project.ga4_property_id,
+        self._googlesearchconsole_operator.set_credentials(self.project.gsc_auth_email)
+        self._temp_data = self._googlesearchconsole_operator.fetch_data(
+            site_url=self.project.gsc_property_name,
             start_date=self.start_date,
             end_date=self.end_date,
-            dimensions=self._DIMENSIONS,
-            metrics=self._METRICS,
+            dimensions=self.dimensions,
         )
 
     def _finalize(self) -> None:
-        self._temp_data["FULL_ADDRESS"] = self._temp_data["pagePath"].apply(lambda page_path: UrlModelManager.get_full_address(self.project.website.root_url.full_address, page_path))
-        self._temp_data["IN_GA"] = True
+        self._temp_data = self._temp_data[~self._temp_data["page"].apply(UrlModelManager.is_fragmented)]
+        self._temp_data["IN_GSC"] = True

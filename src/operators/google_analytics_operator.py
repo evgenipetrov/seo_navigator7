@@ -73,4 +73,3 @@ class GoogleAnalyticsOperator:
             return df
         except Exception as e:
             logger.error(f"Failed to fetch GA4 data: {e}")
-            raise GA4FetchError("Data fetch failed") from e
