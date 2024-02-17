@@ -27,8 +27,13 @@ class UrlInventoryReport(BaseReport):
         urls.extend(self._export_data["semrush_analytics_backlinks_backlinks_domain"]["Target url"].tolist())
         urls.extend(self._export_data["screamingfrog_spider_crawl_export"]["Address"].tolist())
         urls.extend(self._export_data["screamingfrog_sitemap_crawl_export"]["Address"].tolist())
-
+        # prepare for final list crawl
         unique_urls = list(set(urls))
+        self._export_data["screamingfrog_list_crawl_export"] = self.export_manager.get_data("screamingfrog_list_crawl_export", urls=unique_urls)
+        # collect list crawl data
+        unique_urls.extend(self._export_data["screamingfrog_list_crawl_export"]["Address"].tolist())
+        # set report base
+        unique_urls = list(set(unique_urls))
         self._report_base = pd.DataFrame(unique_urls, columns=["BASE_URL"])
         self._export_data["url_inventory_report"] = self.export_manager.get_data("url_inventory_report", urls=unique_urls)
 

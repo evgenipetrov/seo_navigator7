@@ -5,6 +5,7 @@ import pandas as pd
 
 from domain.export.base_export import BaseExport
 from domain.export.page.raw_page_data_export import RawPageDataExport
+from domain.export.screamingfrog.screamingfrog_list_crawl_export import ScreamingFrogListCrawlExport
 from domain.export.screamingfrog.screamingfrog_sitemap_crawl_export import ScreamingFrogSitemapCrawlExport
 from domain.export.screamingfrog.screamingfrog_spider_crawl_export import ScreamingFrogSpiderCrawlExport
 from domain.export.semrush.semrush_analytics_backlinks_backlinks_domain_export import SemrushAnalyticsBacklinksBacklinksDomainExport
@@ -24,6 +25,7 @@ class ExportManager:
         "semrush_analytics_backlinks_backlinks_domain": SemrushAnalyticsBacklinksBacklinksDomainExport,
         "screamingfrog_spider_crawl_export": ScreamingFrogSpiderCrawlExport,
         "screamingfrog_sitemap_crawl_export": ScreamingFrogSitemapCrawlExport,
+        "screamingfrog_list_crawl_export": ScreamingFrogListCrawlExport,
         # Add more exports as needed
     }
 

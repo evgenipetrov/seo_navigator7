@@ -18,7 +18,6 @@ class RawPageDataExport(BaseExport):
 
     def __init__(self, project: ProjectModel, **kwargs: Any):
         super().__init__(project, **kwargs)
-        self.kwargs = kwargs
         self._browser_operator = None
 
         self.source_dir = os.path.join(project.data_folder, "source")
