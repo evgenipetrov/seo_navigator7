@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from django.db import models
 
@@ -14,13 +14,13 @@ class UrlInventoryReportModelManager(BaseModelManager):
     @staticmethod
     def push(**kwargs: Dict[str, Any]) -> "UrlInventoryReportModel":
         # required relations
-        request_url = kwargs.pop("request_url", None)
-        request_url_model = UrlModelManager.push(full_address=request_url)
+        request_url: Optional[Dict[str, Any]] = kwargs.pop("request_url")
+        request_url_model: "UrlModel" = UrlModelManager.push(full_address=request_url)
         kwargs["request_url"] = request_url_model
 
-        response_url = kwargs.pop("response_url", None)
-        if request_url != response_url:
-            response_url_model = UrlModelManager.push(full_address=response_url)
+        response_url: Optional[Dict[str, Any]] = kwargs.pop("response_url", None)
+        if request_url != response_url and response_url is not None:
+            response_url_model: "UrlModel" = UrlModelManager.push(full_address=response_url)
             kwargs["response_url"] = response_url_model
         else:
             kwargs["response_url"] = request_url_model
@@ -29,14 +29,14 @@ class UrlInventoryReportModelManager(BaseModelManager):
             "project": kwargs.pop("project"),
             "request_url": kwargs["request_url"],
         }
-        raw_page_data, created = UrlInventoryReportModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+        model_row, created = UrlInventoryReportModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
-            logger.info(f"[created instance] {raw_page_data}")
+            logger.info(f"[created instance] {model_row}")
         else:
-            logger.info(f"[updated instance] {raw_page_data}")
+            logger.info(f"[updated instance] {model_row}")
 
-        return raw_page_data
+        return model_row
 
     @staticmethod
     def get_all() -> models.QuerySet:

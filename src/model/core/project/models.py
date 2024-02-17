@@ -17,14 +17,14 @@ class ProjectModelManager(BaseModelManager):
             "data_folder": kwargs.pop("data_folder"),
             "website": kwargs.pop("website"),
         }
-        project, created = ProjectModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+        model_row, created = ProjectModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
-            logger.debug(f"[created instance] {project.name}")
+            logger.debug(f"[created instance] {model_row.name}")
         else:
-            logger.debug(f"[updated instance] {project.name}")
+            logger.debug(f"[updated instance] {model_row.name}")
 
-        return project
+        return model_row
 
     @staticmethod
     def get_all() -> models.QuerySet:

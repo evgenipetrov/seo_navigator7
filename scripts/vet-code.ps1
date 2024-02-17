@@ -52,6 +52,6 @@ Write-Host "Sorting imports with isort..."
 
 # Static type checking with mypy
 Write-Host "Performing static type checking with mypy..."
-& $env:CONDA_EXE run -n $env:CONDA_PREFIX mypy --disallow-untyped-defs --explicit-package-bases --config-file "$scriptDirectory\..\.mypy.ini" .
+& $env:CONDA_EXE run -n $env:CONDA_PREFIX mypy --disallow-untyped-defs --ignore-missing-imports --explicit-package-bases --config-file "$scriptDirectory\..\.mypy.ini" .
 
 Set-Location $currentDirectory

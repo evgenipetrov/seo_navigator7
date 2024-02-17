@@ -1,7 +1,7 @@
 import logging
 import os
 import posixpath
-from typing import List, Any
+from typing import Any, List
 
 from domain.export.screamingfrog.base_screamingfrog_export import BaseScreamingfrogExport
 

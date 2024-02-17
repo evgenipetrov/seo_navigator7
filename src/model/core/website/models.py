@@ -15,14 +15,14 @@ class WebsiteModelManager(BaseModelManager):
         identifying_fields: Dict[str, Any] = {
             "root_url": kwargs.pop("root_url"),
         }
-        website, created = WebsiteModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+        model_row, created = WebsiteModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
-            logger.debug(f"[created instance] {website}")
+            logger.debug(f"[created instance] {model_row}")
         else:
-            logger.debug(f"[updated instance] {website}")
+            logger.debug(f"[updated instance] {model_row}")
 
-        return website
+        return model_row
 
     @staticmethod
     def get_all() -> models.QuerySet:

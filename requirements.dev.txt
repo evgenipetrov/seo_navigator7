@@ -5,6 +5,7 @@ mypy
 
 django-stubs
 pandas-stubs
+types-selenium
 
 pytest
 pytest-django

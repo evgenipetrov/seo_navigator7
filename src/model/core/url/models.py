@@ -14,14 +14,14 @@ class UrlModelManager(BaseModelManager):
     def push(**kwargs: Dict[str, Any]) -> "UrlModel":
         # Separate the identifying fields from the updating fields
         identifying_fields = {"full_address": kwargs.pop("full_address")}
-        url, created = UrlModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+        model_row, created = UrlModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
-            logger.debug(f"[created instance] {url.full_address}")
+            logger.debug(f"[created instance] {model_row.full_address}")
         else:
-            logger.debug(f"[created instance] {url.full_address}")
+            logger.debug(f"[created instance] {model_row.full_address}")
 
-        return url
+        return model_row
 
     @staticmethod
     def get_all() -> models.QuerySet:
