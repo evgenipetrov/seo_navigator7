@@ -17,9 +17,9 @@ class UrlModelManager(BaseModelManager):
         url, created = UrlModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
-            logger.debug(f"Url {url.full_address} created successfully.")
+            logger.debug(f"[created instance] {url.full_address}")
         else:
-            logger.debug(f"Url {url.full_address} updated successfully.")
+            logger.debug(f"[created instance] {url.full_address}")
 
         return url
 

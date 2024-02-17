@@ -84,35 +84,6 @@ class BaseExport(ABC):
         else:
             print(f"No data to save for '{self.export_name}' export.")
 
-    def _run(self) -> None:
-        """Orchestrate the export process by calling the defined methods in order."""
-        logger.info("Starting the export process.")
-        try:
-            self._cleanup()
-            logger.info("Cleanup completed.")
-            self._prepare()
-            logger.info("Preparation completed.")
-            self._execute()
-            logger.info("Execution completed.")
-            if self.is_manual:
-                input("Please follow the above instructions to perform the manual export. Press Enter to continue after you're done...")
-            if self._temp_data.empty:
-                try:
-                    self._temp_data = DataFrameOperator.merge_csv(self.temp_dir)
-                    logger.info("Merged CSV files from temp directory.")
-                except Exception as e:
-                    logger.error(f"Failed to load CSV files from temp directory: {e}")
-                    return  # or handle the error as appropriate
-            self._finalize()
-            logger.info("Finalization completed.")
-            self._save()
-            logger.info("Data saved.")
-            self._cleanup()
-            logger.info("Final cleanup completed.")
-        except Exception as e:
-            logger.error(f"An error occurred during the export process: {e}")
-        logger.info("Export process completed.")
-
     @staticmethod
     def _needs_refresh(filepath: str, max_age_days: int = settings.MAX_EXPORT_AGE_DAYS) -> bool:
         last_modified = datetime.fromtimestamp(os.path.getmtime(filepath))
@@ -125,6 +96,32 @@ class BaseExport(ABC):
         else:
             logger.info(f"File {filepath} does not need to be refreshed.")
         return is_refresh_needed
+
+    def _run(self) -> None:
+        """Orchestrate the export process by calling the defined methods in order."""
+        logger.info("Starting the export process.")
+        self._cleanup()
+        logger.info("Cleanup completed.")
+        self._prepare()
+        logger.info("Preparation completed.")
+        self._execute()
+        logger.info("Execution completed.")
+        if self.is_manual:
+            input("Please follow the above instructions to perform the manual export. Press Enter to continue after you're done...")
+        if self._temp_data.empty:
+            try:
+                self._temp_data = DataFrameOperator.merge_csv(self.temp_dir)
+                logger.info("Merged CSV files from temp directory.")
+            except Exception as e:
+                logger.error(f"Failed to load CSV files from temp directory: {e}")
+                return  # or handle the error as appropriate
+        self._finalize()
+        logger.info("Finalization completed.")
+        self._save()
+        logger.info("Data saved.")
+        self._cleanup()
+        logger.info("Final cleanup completed.")
+        logger.info("Export process completed.")
 
     def get_data(self) -> pd.DataFrame:
         logger.info(f"Starting to get data for {self.export_name} export.")
@@ -146,10 +143,7 @@ class BaseExport(ABC):
             else:
                 logger.info("The existing data file is considered old. Refreshing data...")
 
-        try:
-            self._run()
-            self._data = pd.read_csv(self.save_path)
-            logger.info("Data refreshed and loaded successfully.")
-            return self._data
-        except Exception as e:
-            logger.error(f"An error occurred during the data retrieval process: {e}")
+        self._run()
+        self._data = pd.read_csv(self.save_path)
+        logger.info("Data refreshed and loaded successfully.")
+        return self._data

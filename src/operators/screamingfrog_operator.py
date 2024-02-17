@@ -25,6 +25,9 @@ class ScreamingfrogOperator:
     def set_crawl_url(self, url):
         self.parameters.append(f"--crawl {url}")
 
+    def set_sitemap_url(self, sitemap_url):
+        self.parameters.append(f"--crawl-sitemap {sitemap_url}")
+
     def run(self):
         # volume_mapping = f"{self.temp_dir}:/export"
         # full_command = f"docker run --rm -v {volume_mapping} -d {self.image} {' '.join(self.parameters)}"

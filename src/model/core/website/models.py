@@ -18,9 +18,9 @@ class WebsiteModelManager(BaseModelManager):
         website, created = WebsiteModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
-            logger.debug(f"Website {website} created successfully.")
+            logger.debug(f"[created instance] {website}")
         else:
-            logger.debug(f"Website {website} updated successfully.")
+            logger.debug(f"[updated instance] {website}")
 
         return website
 

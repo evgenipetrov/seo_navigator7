@@ -4,7 +4,7 @@ import pandas as pd
 
 from domain.report.base_report import BaseReport
 from model.core.project.models import ProjectModel
-from model.report.url_inventory_report.models import RawPageDataModelManager
+from model.report.url_inventory_report.models import UrlInventoryReportModelManager
 
 logger = logging.getLogger(__name__)
 
@@ -19,12 +19,14 @@ class UrlInventoryReport(BaseReport):
         self._export_data["semrush_analytics_organic_positions_domain"] = self.export_manager.get_data("semrush_analytics_organic_positions_domain")
         self._export_data["semrush_analytics_backlinks_backlinks_domain"] = self.export_manager.get_data("semrush_analytics_backlinks_backlinks_domain")
         self._export_data["screamingfrog_spider_crawl_export"] = self.export_manager.get_data("screamingfrog_spider_crawl_export")
+        self._export_data["screamingfrog_sitemap_crawl_export"] = self.export_manager.get_data("screamingfrog_sitemap_crawl_export")
 
     def _prepare_data(self) -> None:
         urls = self._export_data["semrush_analytics_organic_pages_domain"]["URL"].tolist()
         urls.extend(self._export_data["semrush_analytics_organic_positions_domain"]["URL"].tolist())
         urls.extend(self._export_data["semrush_analytics_backlinks_backlinks_domain"]["Target url"].tolist())
         urls.extend(self._export_data["screamingfrog_spider_crawl_export"]["Address"].tolist())
+        urls.extend(self._export_data["screamingfrog_sitemap_crawl_export"]["Address"].tolist())
 
         unique_urls = list(set(urls))
         self._report_base = pd.DataFrame(unique_urls, columns=["BASE_URL"])
@@ -42,4 +44,4 @@ class UrlInventoryReport(BaseReport):
         for index, row in self._report_data.iterrows():
             arguments = row.to_dict()
             arguments["project"] = self.project
-            RawPageDataModelManager.push(**arguments)
+            UrlInventoryReportModelManager.push(**arguments)

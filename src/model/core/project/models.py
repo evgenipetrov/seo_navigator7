@@ -20,9 +20,9 @@ class ProjectModelManager(BaseModelManager):
         project, created = ProjectModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
-            logger.debug(f"Project {project.name} created successfully.")
+            logger.debug(f"[created instance] {project.name}")
         else:
-            logger.debug(f"Project {project.name} updated successfully.")
+            logger.debug(f"[updated instance] {project.name}")
 
         return project
 

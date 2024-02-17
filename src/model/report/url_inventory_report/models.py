@@ -10,9 +10,9 @@ from model.core.url.models import UrlModel, UrlModelManager
 logger = logging.getLogger(__name__)
 
 
-class RawPageDataModelManager(BaseModelManager):
+class UrlInventoryReportModelManager(BaseModelManager):
     @staticmethod
-    def push(**kwargs: Dict[str, Any]) -> "RawPageDataModel":
+    def push(**kwargs: Dict[str, Any]) -> "UrlInventoryReportModel":
         # required relations
         request_url = kwargs.pop("request_url", None)
         request_url_model = UrlModelManager.push(full_address=request_url)
@@ -29,21 +29,21 @@ class RawPageDataModelManager(BaseModelManager):
             "project": kwargs.pop("project"),
             "request_url": kwargs["request_url"],
         }
-        raw_page_data, created = RawPageDataModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+        raw_page_data, created = UrlInventoryReportModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
-            logger.info(f"Report row {raw_page_data} created successfully.")
+            logger.info(f"[created instance] {raw_page_data}")
         else:
-            logger.info(f"Report row {raw_page_data} updated successfully.")
+            logger.info(f"[updated instance] {raw_page_data}")
 
         return raw_page_data
 
     @staticmethod
     def get_all() -> models.QuerySet:
-        return RawPageDataModel.objects.all()
+        return UrlInventoryReportModel.objects.all()
 
 
-class RawPageDataModel(models.Model):
+class UrlInventoryReportModel(models.Model):
     # required relations
     project = models.ForeignKey(ProjectModel, on_delete=models.CASCADE, related_name="project")
     request_url = models.ForeignKey(UrlModel, on_delete=models.CASCADE, related_name="request_url")
@@ -56,7 +56,7 @@ class RawPageDataModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)  # auto
     updated_at = models.DateTimeField(auto_now=True)  # auto
     # model manager
-    objects: models.Manager = RawPageDataModelManager()
+    objects: models.Manager = UrlInventoryReportModelManager()
 
     def __str__(self) -> str:
         return f"RawPageDataModel: request_url = {self.request_url}"
