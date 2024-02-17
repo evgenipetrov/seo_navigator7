@@ -4,6 +4,7 @@ from typing import Any, Dict, Type
 import pandas as pd
 
 from domain.export.base_export import BaseExport
+from domain.export.googleanalytics.googleanalytics_months_14_to_0_export import GoogleAnalyticsMonths14To0Export
 from domain.export.page.raw_page_data_export import RawPageDataExport
 from domain.export.screamingfrog.screamingfrog_list_crawl_export import ScreamingFrogListCrawlExport
 from domain.export.screamingfrog.screamingfrog_sitemap_crawl_export import ScreamingFrogSitemapCrawlExport
@@ -26,6 +27,7 @@ class ExportManager:
         "screamingfrog_spider_crawl_export": ScreamingFrogSpiderCrawlExport,
         "screamingfrog_sitemap_crawl_export": ScreamingFrogSitemapCrawlExport,
         "screamingfrog_list_crawl_export": ScreamingFrogListCrawlExport,
+        "googleanalytics_months_14_to_0_export": GoogleAnalyticsMonths14To0Export,
         # Add more exports as needed
     }
 

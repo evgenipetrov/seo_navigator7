@@ -1,6 +1,6 @@
 import logging
 from typing import Any, Dict
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 
 from django.db import models
 
@@ -32,6 +32,10 @@ class UrlModelManager(BaseModelManager):
         parsed_url = urlparse(url)
         root_url_str = f"{parsed_url.scheme}://{parsed_url.netloc}"
         return root_url_str
+
+    @staticmethod
+    def get_full_address(root_url: str, path: str) -> str:
+        return urljoin(root_url, path)
 
 
 class UrlModel(models.Model):

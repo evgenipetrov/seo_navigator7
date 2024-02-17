@@ -34,4 +34,4 @@ class ScreamingFrogListCrawlExport(BaseScreamingfrogExport):
         self._screamingfrog_operator.set_export_tabs(self._EXPORT_TABS)
 
     def _finalize(self) -> None:
-        self._temp_data["IN_SITEMAP"] = True
+        pass

@@ -5,3 +5,5 @@ selenium
 selenium-wire
 webdriver-manager
 docker
+google-api-python-client
+google-auth-oauthlib
