@@ -5,7 +5,7 @@ import pandas as pd
 from domain.report.base_report import BaseReport
 from model.core.project.models import ProjectModel
 from model.core.url.models import UrlModelManager
-from model.report.url_inventory_report.models import UrlInventoryReportModelManager
+from model.report.url_inventory_report.models import UrlInventoryReportModelManager, UrlInventoryReportModel
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +20,10 @@ class UrlInventoryReport(BaseReport):
     @property
     def report_name(self) -> str:
         return self._REPORT_NAME
+
+    @property
+    def model_class(self) -> UrlInventoryReportModel:
+        return UrlInventoryReportModel
 
     def _collect_data(self) -> None:
         self._export_data["semrush_analytics_organic_pages_domain"] = self.export_manager.get_data("semrush_analytics_organic_pages_domain")

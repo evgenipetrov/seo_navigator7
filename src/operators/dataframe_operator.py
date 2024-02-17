@@ -33,3 +33,11 @@ class DataFrameOperator:
         merged_df = pd.concat(dataframes, ignore_index=True)
         logger.info("Successfully merged all CSV files.")
         return merged_df
+
+    @staticmethod
+    def remove_timezone(df: pd.DataFrame) -> pd.DataFrame:
+        for column in df.columns:
+            if pd.api.types.is_datetime64_any_dtype(df[column]):
+                # Convert timezone-aware datetime objects to naive ones (without timezone)
+                df[column] = df[column].apply(lambda x: x.replace(tzinfo=None) if pd.notnull(x) else x)
+        return df

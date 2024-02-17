@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 from django.db import models
 
@@ -25,10 +25,7 @@ class UrlInventoryReportModelManager(BaseModelManager):
         else:
             kwargs["response_url"] = request_url_model
 
-        identifying_fields: Dict[str, Any] = {
-            "project": kwargs.pop("project"),
-            "request_url": kwargs["request_url"],
-        }
+        identifying_fields = {field: kwargs.pop(field) for field in UrlInventoryReportModel.IDENTIFYING_FIELDS if field in kwargs}
         model_row, created = UrlInventoryReportModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
@@ -38,12 +35,28 @@ class UrlInventoryReportModelManager(BaseModelManager):
 
         return model_row
 
+    def get_identifying_fields(self) -> List[str]:
+        identifying_fields = self.model.IDENTIFYING_FIELDS
+        return identifying_fields
+
+    def get_field_names(self) -> List[str]:
+        return [field.name for field in UrlInventoryReportModel._meta.fields]
+
     @staticmethod
     def get_all() -> models.QuerySet:
         return UrlInventoryReportModel.objects.all()
 
 
 class UrlInventoryReportModel(models.Model):
+    # List of column names that are updated manually by users. These fields might require
+    # special handling during data import/export or synchronization processes.
+    MANUAL_COLUMNS = [
+        "note",
+    ]
+    IDENTIFYING_FIELDS = [
+        "project",
+        "request_url",
+    ]
     # required relations
     project = models.ForeignKey(ProjectModel, on_delete=models.CASCADE, related_name="project")
     request_url = models.ForeignKey(UrlModel, on_delete=models.CASCADE, related_name="request_url")
@@ -52,6 +65,7 @@ class UrlInventoryReportModel(models.Model):
     status_code = models.IntegerField()
     # optional fields
     page_content_file = models.CharField(max_length=255, blank=True, null=True)
+    note = models.CharField(max_length=255, blank=True, null=True)
     # system attributes
     created_at = models.DateTimeField(auto_now_add=True)  # auto
     updated_at = models.DateTimeField(auto_now=True)  # auto

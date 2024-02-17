@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from django.db import models
 
@@ -13,10 +13,7 @@ class ProjectModelManager(BaseModelManager):
 
     @staticmethod
     def push(**kwargs: Dict[str, Any]) -> "ProjectModel":
-        identifying_fields: Dict[str, Any] = {
-            "data_folder": kwargs.pop("data_folder"),
-            "website": kwargs.pop("website"),
-        }
+        identifying_fields = {field: kwargs.pop(field) for field in ProjectModel.IDENTIFYING_FIELDS if field in kwargs}
         model_row, created = ProjectModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
@@ -26,12 +23,23 @@ class ProjectModelManager(BaseModelManager):
 
         return model_row
 
+    def get_identifying_fields(self) -> List[str]:
+        identifying_fields = self.model.IDENTIFYING_FIELDS
+        return identifying_fields
+
+    def get_field_names(self) -> List[str]:
+        return [field.name for field in ProjectModel._meta.fields]
+
     @staticmethod
     def get_all() -> models.QuerySet:
         return ProjectModel.objects.all()
 
 
 class ProjectModel(models.Model):
+    IDENTIFYING_FIELDS = [
+        "website",
+        "data_folder",
+    ]
     # required relations
     website = models.ForeignKey(WebsiteModel, on_delete=models.CASCADE, related_name="website")
     # required fields
@@ -49,7 +57,12 @@ class ProjectModel(models.Model):
     objects: models.Manager = ProjectModelManager()
 
     def __str__(self) -> str:
-        return f"ProjectModel: website = {self.website}"
+        return self.name
+
+    @property
+    def identifying_fields(self) -> Dict[str, Any]:
+        """Dynamically constructs a dictionary of identifying fields and their values."""
+        return {field: getattr(self, field) for field in self.IDENTIFYING_FIELDS}
 
     class Meta:
         verbose_name = "Project"

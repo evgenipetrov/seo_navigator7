@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List
 from urllib.parse import urlparse, urljoin
 
 from django.db import models
@@ -10,10 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 class UrlModelManager(BaseModelManager):
+
     @staticmethod
     def push(**kwargs: Dict[str, Any]) -> "UrlModel":
-        # Separate the identifying fields from the updating fields
-        identifying_fields = {"full_address": kwargs.pop("full_address")}
+        identifying_fields = {field: kwargs.pop(field) for field in UrlModel.IDENTIFYING_FIELDS if field in kwargs}
         model_row, created = UrlModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
 
         if created:
@@ -22,6 +22,13 @@ class UrlModelManager(BaseModelManager):
             logger.debug(f"[created instance] {model_row.full_address}")
 
         return model_row
+
+    def get_identifying_fields(self) -> List[str]:
+        identifying_fields = self.model.IDENTIFYING_FIELDS
+        return identifying_fields
+
+    def get_field_names(self) -> List[str]:
+        return [field.name for field in UrlModel._meta.fields]
 
     @staticmethod
     def get_all() -> models.QuerySet:
@@ -43,6 +50,9 @@ class UrlModelManager(BaseModelManager):
 
 
 class UrlModel(models.Model):
+    IDENTIFYING_FIELDS = [
+        "full_address",
+    ]
     # required relations
     # required fields
     full_address = models.URLField(max_length=200, unique=True)  # required
@@ -54,7 +64,7 @@ class UrlModel(models.Model):
     objects: models.Manager = UrlModelManager()
 
     def __str__(self) -> str:
-        return f"UrlModel: full_address = {self.full_address}"
+        return self.full_address
 
     class Meta:
         verbose_name = "Url"
