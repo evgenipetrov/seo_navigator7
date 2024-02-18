@@ -14,7 +14,13 @@ class UrlInventoryReportModelManager(BaseModelManager):
     @staticmethod
     def push(**kwargs: Dict[str, Any]) -> "UrlInventoryReportModel":
         # required relations
-        request_url: Optional[Dict[str, Any]] = kwargs.pop("request_url")
+        request_url: Optional[Dict[str, Any]] = kwargs.pop("request_url", None)
+        if request_url is None:
+            logger.debug("No 'request_url' provided to push method")
+            # Handle the case where 'request_url' is not provided
+            # For example, you might skip this entry, raise a custom error, or add some default behavior
+            return
+
         request_url_model: "UrlModel" = UrlModelManager.push(full_address=request_url)
         kwargs["request_url"] = request_url_model
 
@@ -35,22 +41,28 @@ class UrlInventoryReportModelManager(BaseModelManager):
 
         return model_row
 
-    def get_identifying_fields(self) -> List[str]:
-        identifying_fields = self.model.IDENTIFYING_FIELDS
-        return identifying_fields
+    def get_manual_fields(self) -> List[str]:
+        return self.model.IDENTIFYING_FIELDS
 
-    def get_field_names(self) -> List[str]:
-        return [field.name for field in UrlInventoryReportModel._meta.fields]
+    def get_identifying_fields(self) -> List[str]:
+        return self.model.MANUAL_FIELDS
 
     @staticmethod
     def get_all() -> models.QuerySet:
         return UrlInventoryReportModel.objects.all()
 
+    def get_instance_id(self, instance_str: str) -> int:
+        try:
+            return self.model.objects.get(request_url__full_address=instance_str).id
+        except self.model.DoesNotExist:
+            logger.error(f"URLInventoryReportModel instance with request_url '{instance_str}' does not exist.")
+            return None
+
 
 class UrlInventoryReportModel(models.Model):
     # List of column names that are updated manually by users. These fields might require
     # special handling during data import/export or synchronization processes.
-    MANUAL_COLUMNS = [
+    MANUAL_FIELDS = [
         "note",
     ]
     IDENTIFYING_FIELDS = [
@@ -73,7 +85,7 @@ class UrlInventoryReportModel(models.Model):
     objects: models.Manager = UrlInventoryReportModelManager()
 
     def __str__(self) -> str:
-        return f"RawPageDataModel: request_url = {self.request_url}"
+        return f"RawPageDataModel: request_url = {self.request_url.full_address}"
 
     class Meta:
         db_table = "report_raw_page_data"

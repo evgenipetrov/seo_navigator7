@@ -36,27 +36,13 @@ class ExcelOperator:
             # Check if the existing columns in the sheet match the expected columns
             if set(existing_columns) != set(expected_columns):
                 # Log a warning or raise an error as per your application's requirements
-                logger.warning(f"Column mismatch in sheet '{sheet_name}'. Existing columns: {existing_columns}, Expected columns: {expected_columns}")
+                logger.warning(f"Column mismatch in sheet '{sheet_name}'")
+                logger.warning(f"[{sheet_name}] Existing columns: {existing_columns}")
+                logger.warning(f"[{sheet_name}] Expected columns: {expected_columns}")
 
         self._workbook.save(self.file_path)
 
-    def pull_updates(self, sheet_name: str, model_class) -> None:
-        self._validate_worksheet(sheet_name, model_class.objects.get_field_names())
-        # Read data from Excel
-        df = pd.read_excel(self.file_path, sheet_name=sheet_name)
-        for index, row in df.iterrows():
-            # Construct identifying fields and values from the row
-            identifying_fields = {field: row[field] for field in model_class.IDENTIFYING_FIELDS}
-
-            # Update or create the model instance
-            instance, created = model_class.objects.update_or_create(defaults=dict(row), **identifying_fields)
-
-            # Log the outcome
-            action = "created" if created else "updated"
-            logger.info(f"[{action} instance] {instance}")
-
     def update_rows(self, sheet_name: str, rows_to_update: pd.DataFrame, model_class) -> None:
-        """Update existing rows in the Excel sheet based on identifying fields."""
         sheet = self._workbook[sheet_name]
 
         # Read the headers from the Excel sheet
@@ -65,20 +51,29 @@ class ExcelOperator:
         # Get the identifying fields from the model class
         identifying_fields = model_class.IDENTIFYING_FIELDS
 
+        # Create a mapping of composite keys to Excel row numbers
+        composite_key_to_row = {}
+        for excel_row in range(2, sheet.max_row + 1):  # Start from 2 to skip the header row
+            excel_row_key = tuple(sheet.cell(row=excel_row, column=headers.index(field) + 1).value for field in identifying_fields if field in headers)
+            composite_key_to_row[excel_row_key] = excel_row
+
         # Iterate over the DataFrame rows to update the Excel sheet
         for _, row in rows_to_update.iterrows():
             # Construct the composite key for the current DataFrame row
             composite_key = tuple(row[field] for field in identifying_fields if field in row)
 
-            # Find the Excel row that matches this composite key
-            for excel_row in range(2, sheet.max_row + 1):  # Start from 2 to skip the header row
-                excel_row_key = tuple(sheet.cell(row=excel_row, column=headers.index(field) + 1).value for field in identifying_fields if field in headers)
-                if excel_row_key == composite_key:
-                    # Update the cells in this row with new values from the DataFrame
-                    for header in headers:
-                        if header in row:
-                            sheet.cell(row=excel_row, column=headers.index(header) + 1).value = row[header]
-                    break
+            # Use the mapping to find the Excel row that matches this composite key
+            if composite_key in composite_key_to_row:
+                excel_row = composite_key_to_row[composite_key]
+                logger.debug(f"Matching row found in Excel at row {excel_row} for composite key {composite_key}")
+
+                # Update the cells in this row with new values from the DataFrame
+                for header in headers:
+                    if header in row.index:  # Ensure the header is present in the DataFrame row
+                        cell = sheet.cell(row=excel_row, column=headers.index(header) + 1)
+                        cell.value = row[header]
+            else:
+                logger.warning(f"No matching row found in Excel for composite key {composite_key}")
 
     def append_rows(self, sheet_name: str, rows_to_append: pd.DataFrame) -> None:
         """Append new rows to the Excel sheet ensuring DataFrame columns are rearranged to match the sheet's columns."""
@@ -158,12 +153,22 @@ class ExcelOperator:
 
         # Now, call the new methods with the categorized rows
         if not rows_to_update.empty:
+            rows_to_update.reset_index(drop=True, inplace=True)
             self.update_rows(sheet_name, rows_to_update, model_class)
 
         if not rows_to_append.empty:
+            rows_to_append.reset_index(drop=True, inplace=True)
             self.append_rows(sheet_name, rows_to_append)
 
         if not rows_to_delete.empty:
             self.delete_rows(sheet_name, rows_to_delete, model_class)
 
         self._workbook.save(self.file_path)
+
+    def pull_updates(self, sheet_name: str) -> pd.DataFrame:
+        """Read data from an Excel sheet and return it as a DataFrame."""
+        sheet = self._workbook[sheet_name]
+        data = pd.DataFrame(sheet.values)
+        data.columns = data.iloc[0]
+        data = data.iloc[1:]
+        return data

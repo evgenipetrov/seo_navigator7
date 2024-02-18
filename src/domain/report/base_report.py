@@ -69,7 +69,7 @@ class BaseReport(ABC):
     def _dump_report(self) -> None:
         self._report_data.to_csv(self.save_path, index=False)
 
-    def _load_from_db(self) -> pd.DataFrame:
+    def _load_flat_from_db(self) -> pd.DataFrame:
         # Start constructing the base queryset
         queryset = self.model_class.objects.filter(project=self.project)
 
@@ -101,18 +101,56 @@ class BaseReport(ABC):
         df = pd.DataFrame(data_list)
         return df
 
+    def _push_updates_to_excel(self) -> None:
+        data = self._load_flat_from_db()
+        self._excel_operator.push_updates(self.report_name, data, self.model_class)
+        logger.info(f"[master_sheet updated] {self.save_path}")
+
+    def _pull_updates_from_excel(self) -> None:
+        excel_data = self._excel_operator.pull_updates(self.report_name)
+        fk_fields = self.model_class.objects.get_foreign_key_fields()
+
+        for index, row in excel_data.iterrows():
+            query_kwargs = {}
+            update_fields = {}
+
+            for field, value in row.items():
+                # Check if field is a foreign key that needs to be resolved
+                if field in fk_fields:
+                    related_model = fk_fields[field]
+                    related_model_manager = related_model.objects
+
+                    # Assume get_instance_id is available on the manager
+                    fk_id = related_model_manager.get_instance_id(str(value))
+                    if fk_id is not None:
+                        query_kwargs[field + "_id"] = fk_id  # Use the foreign key field with _id suffix for filtering
+                    else:
+                        logger.warning(f"Could not find related instance for field '{field}' with value '{value}'")
+                        break  # Skip this row if any foreign key resolution fails
+                else:
+                    # For non-foreign key fields, prepare for direct update
+                    update_fields[field] = value
+
+            else:  # This else clause runs if no break occurs in the loop
+                db_entry = self.model_class.objects.filter(**query_kwargs).first()
+                if db_entry:
+                    for field, value in update_fields.items():
+                        setattr(db_entry, field, value)
+                    db_entry.save()
+                    logger.info(f"Updated database entry for {query_kwargs}")
+                else:
+                    # Handle the case where the entry doesn't exist; you might want to create a new instance
+                    logger.info(f"No entry found matching {query_kwargs}, consider creating a new instance")
+
     def _save_data(self) -> None:
-        # pull manual updates
-        # self._excel_operator.pull_updates(self.report_name, self.model_class) #todo: uncomment
+        self._pull_updates_from_excel()
         # update db
         self._update_db()
         logger.info(f"[database updated] {self.project.name}")
         self._dump_report()
         logger.info(f"[report saved] {self.save_path}")
         # excel sync
-        data = self._load_from_db()
-        self._excel_operator.push_updates(self.report_name, data, self.model_class)
-        logger.info(f"[master_sheet updated] {self.save_path}")
+        self._push_updates_to_excel()
 
     def generate(self) -> None:
         self._collect_data()

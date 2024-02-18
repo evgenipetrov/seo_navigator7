@@ -22,6 +22,9 @@ class WebsiteModelManager(BaseModelManager):
 
         return model_row
 
+    def get_manual_fields(self):
+        pass
+
     def get_identifying_fields(self) -> List[str]:
         identifying_fields = self.model.IDENTIFYING_FIELDS
         return identifying_fields
@@ -32,6 +35,13 @@ class WebsiteModelManager(BaseModelManager):
     @staticmethod
     def get_all() -> models.QuerySet:
         return WebsiteModel.objects.all()
+
+    def get_instance_id(self, instance_str: str) -> int:
+        try:
+            return self.model.objects.get(root_url__full_address=instance_str).id
+        except self.model.DoesNotExist:
+            logger.error(f"WebsiteModel instance with root_url '{instance_str}' does not exist.")
+            return None
 
 
 class WebsiteModel(models.Model):

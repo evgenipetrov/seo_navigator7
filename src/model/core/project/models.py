@@ -23,9 +23,11 @@ class ProjectModelManager(BaseModelManager):
 
         return model_row
 
+    def get_manual_fields(self):
+        pass
+
     def get_identifying_fields(self) -> List[str]:
-        identifying_fields = self.model.IDENTIFYING_FIELDS
-        return identifying_fields
+        return self.model.IDENTIFYING_FIELDS
 
     def get_field_names(self) -> List[str]:
         return [field.name for field in ProjectModel._meta.fields]
@@ -33,6 +35,13 @@ class ProjectModelManager(BaseModelManager):
     @staticmethod
     def get_all() -> models.QuerySet:
         return ProjectModel.objects.all()
+
+    def get_instance_id(self, instance_str: str) -> int:
+        try:
+            return self.model.objects.get(name=instance_str).id
+        except self.model.DoesNotExist:
+            logger.error(f"ProjectModel instance with name '{instance_str}' does not exist.")
+            return None
 
 
 class ProjectModel(models.Model):

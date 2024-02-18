@@ -23,6 +23,9 @@ class UrlModelManager(BaseModelManager):
 
         return model_row
 
+    def get_manual_fields(self):
+        pass
+
     def get_identifying_fields(self) -> List[str]:
         identifying_fields = self.model.IDENTIFYING_FIELDS
         return identifying_fields
@@ -47,6 +50,13 @@ class UrlModelManager(BaseModelManager):
     @staticmethod
     def is_fragmented(url: str) -> bool:
         return bool(urlparse(url).fragment)
+
+    def get_instance_id(self, instance_str: str) -> int:
+        try:
+            return self.model.objects.get(full_address=instance_str).id
+        except self.model.DoesNotExist:
+            logger.error(f"UrlModel instance with full_address '{instance_str}' does not exist.")
+            return None
 
 
 class UrlModel(models.Model):
