@@ -1,7 +1,8 @@
 import logging
 from typing import Any, Dict, List
 
-from django.db import models
+from django.core.exceptions import ValidationError
+from django.db import models, IntegrityError
 
 from model.base_model_manager import BaseModelManager
 from model.core.url.models import UrlModel
@@ -12,15 +13,34 @@ logger = logging.getLogger(__name__)
 class WebsiteModelManager(BaseModelManager):
     @staticmethod
     def push(**kwargs: Dict[str, Any]) -> "WebsiteModel":
+        # Validate identifying fields
         identifying_fields = {field: kwargs.pop(field) for field in WebsiteModel.IDENTIFYING_FIELDS if field in kwargs}
-        model_row, created = WebsiteModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+        for field, value in identifying_fields.items():
+            if value is None or pd.isna(value):  # Using pandas to check for NaN
+                logger.error(f"Invalid identifying field '{field}' with value '{value}'")
+                return None  # Or handle this case as appropriate
 
-        if created:
-            logger.debug(f"[created instance] {model_row}")
-        else:
-            logger.debug(f"[updated instance] {model_row}")
+        # Handle missing identifying fields
+        if not identifying_fields:
+            logger.error("No identifying fields provided for WebsiteModel")
+            return None  # Or handle this case as appropriate
 
-        return model_row
+        # Attempt to update or create the WebsiteModel instance, handling potential exceptions
+        try:
+            model_row, created = WebsiteModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+            if created:
+                logger.debug(f"[created instance] {model_row}")
+            else:
+                logger.debug(f"[updated instance] {model_row}")
+            return model_row
+        except IntegrityError as e:
+            logger.error(f"Integrity error while pushing WebsiteModel: {e}")
+        except ValidationError as e:
+            logger.error(f"Validation error while pushing WebsiteModel: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error while pushing WebsiteModel: {e}")
+
+        return None  # Or handle this case as appropriate
 
     def get_manual_fields(self):
         pass

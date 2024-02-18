@@ -2,7 +2,9 @@ import logging
 from typing import Any, Dict, List
 from urllib.parse import urlparse, urljoin
 
-from django.db import models
+import pandas as pd
+from django.core.exceptions import ValidationError
+from django.db import models, IntegrityError
 
 from model.base_model_manager import BaseModelManager
 
@@ -13,15 +15,34 @@ class UrlModelManager(BaseModelManager):
 
     @staticmethod
     def push(**kwargs: Dict[str, Any]) -> "UrlModel":
+        # Validate identifying fields
         identifying_fields = {field: kwargs.pop(field) for field in UrlModel.IDENTIFYING_FIELDS if field in kwargs}
-        model_row, created = UrlModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+        for field, value in identifying_fields.items():
+            if value is None or pd.isna(value):  # Using pandas to check for NaN
+                logger.error(f"Invalid identifying field '{field}' with value '{value}'")
+                return None  # Or handle this case as appropriate
 
-        if created:
-            logger.debug(f"[created instance] {model_row.full_address}")
-        else:
-            logger.debug(f"[created instance] {model_row.full_address}")
+        # Handle missing identifying fields
+        if not identifying_fields:
+            logger.error("No identifying fields provided for UrlModel")
+            return None  # Or handle this case as appropriately
 
-        return model_row
+        # Attempt to update or create the UrlModel instance, handling potential exceptions
+        try:
+            model_row, created = UrlModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+            if created:
+                logger.debug(f"[created instance] {model_row.full_address}")
+            else:
+                logger.debug(f"[updated instance] {model_row.full_address}")
+            return model_row
+        except IntegrityError as e:
+            logger.error(f"Integrity error while pushing UrlModel: {e}")
+        except ValidationError as e:
+            logger.error(f"Validation error while pushing UrlModel: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error while pushing UrlModel: {e}")
+
+        return None  # Or handle this case as appropriately
 
     def get_manual_fields(self):
         pass

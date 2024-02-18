@@ -56,25 +56,29 @@ class UrlInventoryReport(BaseReport):
         model_fields = self.model_class.objects.get_field_names()  # Use your method to get field names
         model_fields.append("BASE_URL")  # Add BASE_URL to the list of columns
         self._report_base = pd.DataFrame(columns=model_fields)
-
         # Populate BASE_URL column with unique URLs
         self._report_base["BASE_URL"] = pd.Series(unique_urls)
         self._export_data["url_inventory_report"] = self.export_manager.get_data("url_inventory_report", urls=unique_urls)
 
     def _process_data(self) -> None:
-        # Perform the initial merge
-        self._report_data = self._report_base.merge(self._export_data["url_inventory_report"], left_on="BASE_URL", right_on="request_url", how="left")
+        # Merge _report_base with _export_data["url_inventory_report"] on matching URLs
+        # This merge temporarily combines the data to facilitate the update
+        merged_df = self._report_base.merge(self._export_data["url_inventory_report"], left_on="BASE_URL", right_on="request_url", how="left", suffixes=("", "_update"))
 
-        # Prepare the DataFrame from 'url_inventory_report' for update by setting its index to 'request_url'
-        update_df = self._export_data["url_inventory_report"].set_index("request_url")
+        # Iterate through columns to update _report_base from _export_data["url_inventory_report"]
+        for col in merged_df.columns:
+            if col.endswith("_update"):
+                # Determine the original column name by removing '_update' suffix
+                original_col = col[:-7]  # '_update' is 7 characters long
 
-        # Update '_report_data' by overwriting values with those from 'update_df' wherever columns and indices match
-        # Ensure '_report_data' index is set to 'BASE_URL' for proper alignment during update
-        self._report_data.set_index("BASE_URL", inplace=True)
-        self._report_data.update(update_df)
+                # Check if the original column exists in _report_base
+                if original_col in self._report_base.columns:
+                    # Update _report_base with values from the merged DataFrame
+                    # Prefer values from the '_update' column, falling back to the original where '_update' is NaN
+                    self._report_base[original_col] = merged_df[col].combine_first(merged_df[original_col])
 
-        # Optionally, reset the index if you want 'BASE_URL' back as a column
-        self._report_data.reset_index(inplace=True)
+        # Note: _report_data is updated with the final _report_base DataFrame
+        self._report_data = self._report_base.copy()
 
     def _finalize(self) -> None:
         # Drop all columns that start with "BASE_"
@@ -86,6 +90,8 @@ class UrlInventoryReport(BaseReport):
             arguments = row.to_dict()
             arguments["project"] = self.project
             UrlInventoryReportModelManager.push(**arguments)
+            # self.model_class.objects.push(**arguments)
+            logger.info(f"[database updated] {self.project.name}")
 
     # def _pull_updates_from_excel(self) -> None:
     #     excel_data = self._excel_operator.pull_updates(self.report_name)

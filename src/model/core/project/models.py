@@ -1,6 +1,8 @@
 import logging
 from typing import Any, Dict, List
 
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.db import models
 
 from model.base_model_manager import BaseModelManager
@@ -13,15 +15,34 @@ class ProjectModelManager(BaseModelManager):
 
     @staticmethod
     def push(**kwargs: Dict[str, Any]) -> "ProjectModel":
+        # Validate identifying fields
         identifying_fields = {field: kwargs.pop(field) for field in ProjectModel.IDENTIFYING_FIELDS if field in kwargs}
-        model_row, created = ProjectModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+        for field, value in identifying_fields.items():
+            if value is None or pd.isna(value):  # Using pandas to check for NaN
+                logger.error(f"Invalid identifying field '{field}' with value '{value}'")
+                return None  # Or handle this case as appropriate
 
-        if created:
-            logger.debug(f"[created instance] {model_row.name}")
-        else:
-            logger.debug(f"[updated instance] {model_row.name}")
+        # Handle missing identifying fields
+        if not identifying_fields:
+            logger.error("No identifying fields provided for ProjectModel")
+            return None  # Or handle this case as appropriate
 
-        return model_row
+        # Attempt to update or create the ProjectModel instance, handling potential exceptions
+        try:
+            model_row, created = ProjectModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+            if created:
+                logger.debug(f"[created instance] {model_row.name}")
+            else:
+                logger.debug(f"[updated instance] {model_row.name}")
+            return model_row
+        except IntegrityError as e:
+            logger.error(f"Integrity error while pushing ProjectModel: {e}")
+        except ValidationError as e:
+            logger.error(f"Validation error while pushing ProjectModel: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error while pushing ProjectModel: {e}")
+
+        return None  # Or handle this case as appropriate
 
     def get_manual_fields(self):
         pass

@@ -1,7 +1,8 @@
 import logging
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List
 
-from django.db import models
+from django.core.exceptions import ValidationError
+from django.db import models, IntegrityError
 
 from model.base_model_manager import BaseModelManager
 from model.core.project.models import ProjectModel
@@ -13,33 +14,52 @@ logger = logging.getLogger(__name__)
 class UrlInventoryReportModelManager(BaseModelManager):
     @staticmethod
     def push(**kwargs: Dict[str, Any]) -> "UrlInventoryReportModel":
-        # required relations
-        request_url: Optional[Dict[str, Any]] = kwargs.pop("request_url", None)
+        # Validate 'request_url'
+        request_url = kwargs.pop("request_url", None)
         if request_url is None:
-            logger.debug("No 'request_url' provided to push method")
-            # Handle the case where 'request_url' is not provided
-            # For example, you might skip this entry, raise a custom error, or add some default behavior
-            return
+            logger.error("No 'request_url' provided to push method")
+            return None
 
-        request_url_model: "UrlModel" = UrlModelManager.push(full_address=request_url)
+        # Attempt to push 'request_url' to 'UrlModel'
+        request_url_model = UrlModelManager.push(full_address=request_url)
+        if request_url_model is None:
+            logger.error(f"Failed to obtain 'UrlModel' for request_url: {request_url}")
+            return None
         kwargs["request_url"] = request_url_model
 
-        response_url: Optional[Dict[str, Any]] = kwargs.pop("response_url", None)
-        if request_url != response_url and response_url is not None:
-            response_url_model: "UrlModel" = UrlModelManager.push(full_address=response_url)
+        # Validate 'response_url'
+        response_url = kwargs.pop("response_url", None)
+        if response_url and response_url != request_url:
+            response_url_model = UrlModelManager.push(full_address=response_url)
+            if response_url_model is None:
+                logger.error(f"Failed to obtain 'UrlModel' for response_url: {response_url}")
+                return None
             kwargs["response_url"] = response_url_model
         else:
             kwargs["response_url"] = request_url_model
 
+        # Validate identifying fields
         identifying_fields = {field: kwargs.pop(field) for field in UrlInventoryReportModel.IDENTIFYING_FIELDS if field in kwargs}
-        model_row, created = UrlInventoryReportModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+        if not identifying_fields:
+            logger.error("No identifying fields provided for UrlInventoryReportModel")
+            return None
 
-        if created:
-            logger.info(f"[created instance] {model_row}")
-        else:
-            logger.info(f"[updated instance] {model_row}")
+        # Attempt to update or create the UrlInventoryReportModel instance, handling potential exceptions
+        try:
+            model_row, created = UrlInventoryReportModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+            if created:
+                logger.info(f"[created instance] {model_row}")
+            else:
+                logger.info(f"[updated instance] {model_row}")
+            return model_row
+        except IntegrityError as e:
+            logger.error(f"Integrity error while pushing UrlInventoryReportModel: {e}")
+        except ValidationError as e:
+            logger.error(f"Validation error while pushing UrlInventoryReportModel: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error while pushing UrlInventoryReportModel: {e}")
 
-        return model_row
+        return None
 
     def get_manual_fields(self) -> List[str]:
         return self.model.IDENTIFYING_FIELDS

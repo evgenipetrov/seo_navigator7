@@ -68,6 +68,7 @@ class BaseReport(ABC):
 
     def _dump_report(self) -> None:
         self._report_data.to_csv(self.save_path, index=False)
+        logger.info(f"[report saved] {self.save_path}")
 
     def _load_flat_from_db(self) -> pd.DataFrame:
         # Start constructing the base queryset
@@ -143,13 +144,13 @@ class BaseReport(ABC):
                     logger.info(f"No entry found matching {query_kwargs}, consider creating a new instance")
 
     def _save_data(self) -> None:
+        # get manually updated column values from the Excel file
         self._pull_updates_from_excel()
         # update db
         self._update_db()
-        logger.info(f"[database updated] {self.project.name}")
+        # save the report to a CSV file
         self._dump_report()
-        logger.info(f"[report saved] {self.save_path}")
-        # excel sync
+        # push updates to the Excel file
         self._push_updates_to_excel()
 
     def generate(self) -> None:
