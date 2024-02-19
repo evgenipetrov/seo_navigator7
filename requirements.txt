@@ -5,7 +5,12 @@ selenium
 selenium-wire
 webdriver-manager
 docker
-google-api-python-client
+google-auth
 google-auth-oauthlib
+google-api-python-client
+
 tenacity
 openpyxl
+
+python-dateutil
+requests

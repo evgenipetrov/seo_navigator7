@@ -73,4 +73,4 @@ if ($env:DOCKER_BUILD_ENABLED -eq "true")
 
 Write-Host "Environment setup is complete."
 
-# End of setup-env.ps1
+# End of windows_setup-env.ps1

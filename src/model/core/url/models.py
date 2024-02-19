@@ -1,10 +1,10 @@
 import logging
 from typing import Any, Dict, List
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urljoin, urlparse
 
 import pandas as pd
 from django.core.exceptions import ValidationError
-from django.db import models, IntegrityError
+from django.db import IntegrityError, models
 
 from model.base_model_manager import BaseModelManager
 
@@ -29,6 +29,7 @@ class UrlModelManager(BaseModelManager):
 
         # Attempt to update or create the UrlModel instance, handling potential exceptions
         try:
+            kwargs = {k: v for k, v in kwargs.items() if not pd.isna(v)}
             model_row, created = UrlModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
             if created:
                 logger.debug(f"[created instance] {model_row.full_address}")
@@ -92,7 +93,7 @@ class UrlModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)  # auto
     updated_at = models.DateTimeField(auto_now=True)  # auto
     # model manager
-    objects: models.Manager = UrlModelManager()
+    objects = UrlModelManager()
 
     def __str__(self) -> str:
         return self.full_address

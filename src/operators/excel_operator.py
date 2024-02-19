@@ -131,17 +131,17 @@ class ExcelOperator:
             combined_data = pd.merge(old_data_renamed, new_data_renamed, on=unique_fields, how="outer", indicator=True)
 
             # Categorize rows based on the _merge indicator
-            rows_to_update = combined_data[combined_data["_merge"] == "both"]
-            rows_to_append = combined_data[combined_data["_merge"] == "right_only"]
-            rows_to_delete = combined_data[combined_data["_merge"] == "left_only"]
+            rows_to_update: pd.DataFrame = combined_data[combined_data["_merge"] == "both"]
+            rows_to_append: pd.DataFrame = combined_data[combined_data["_merge"] == "right_only"]
+            rows_to_delete: pd.DataFrame = combined_data[combined_data["_merge"] == "left_only"]
 
             # Clean up rows_to_update: remove '_old' suffix and '_merge' column
             rows_to_update = rows_to_update.rename(columns=lambda col: col.replace("_new", ""))
-            rows_to_update.drop(columns=["_merge"] + [col for col in rows_to_update if col.endswith("_old")], inplace=True)
+            rows_to_update.drop(columns=["_merge"] + [str(col) for col in rows_to_update if str(col).endswith("_old")], inplace=True)
 
             # Clean up rows_to_append: remove '_new' suffix and '_merge' column
             rows_to_append = rows_to_append.rename(columns=lambda col: col.replace("_new", ""))
-            rows_to_append.drop(columns=["_merge"] + [col for col in rows_to_append if col.endswith("_old")], inplace=True)
+            rows_to_append.drop(columns=["_merge"] + [str(col) for col in rows_to_append if str(col).endswith("_old")], inplace=True)
 
             # Clean up rows_to_delete: drop '_merge' column
             rows_to_delete = rows_to_delete.drop(columns=["_merge"])

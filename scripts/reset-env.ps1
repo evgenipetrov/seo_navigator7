@@ -4,7 +4,7 @@ Write-Host "Starting environment reset process..."
 
 # Construct full paths to the cleanup and setup scripts using $PSScriptRoot
 $destroyScriptPath = Join-Path -Path $PSScriptRoot -ChildPath "destroy-env.ps1"
-$setupScriptPath = Join-Path -Path $PSScriptRoot -ChildPath "setup-env.ps1"
+$setupScriptPath = Join-Path -Path $PSScriptRoot -ChildPath "windows_setup-env.ps1"
 
 
 Write-Host "Running Cleanup Script..."

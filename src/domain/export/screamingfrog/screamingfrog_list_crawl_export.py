@@ -20,6 +20,12 @@ class ScreamingFrogListCrawlExport(BaseScreamingfrogExport):
     def export_name(self) -> str:
         return self._EXPORT_NAME
 
+    def _set_crawl_config(self) -> None:
+        self._screamingfrog_operator.set_crawl_config(self._CRAWL_CONFIG)
+
+    def _set_export_tabs(self) -> None:
+        self._screamingfrog_operator.set_export_tabs(self._EXPORT_TABS)
+
     def _prepare(self) -> None:
         url_list_filename = "crawl_list.txt"
         urls = self.kwargs.get("urls", [])
@@ -29,9 +35,6 @@ class ScreamingFrogListCrawlExport(BaseScreamingfrogExport):
                 file.write(f"{url}\n")
         docker_crawl_list_file_path = posixpath.join("/export", url_list_filename)
         self._screamingfrog_operator.set_crawl_list(docker_crawl_list_file_path)
-
-        self._screamingfrog_operator.set_crawl_config(self._CRAWL_CONFIG)
-        self._screamingfrog_operator.set_export_tabs(self._EXPORT_TABS)
 
     def _finalize(self) -> None:
         pass

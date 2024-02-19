@@ -1,9 +1,9 @@
 import logging
 from typing import Any, Dict, List
 
+import pandas as pd
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-from django.db import models
+from django.db import IntegrityError, models
 
 from model.base_model_manager import BaseModelManager
 from model.core.website.models import WebsiteModel
@@ -29,6 +29,7 @@ class ProjectModelManager(BaseModelManager):
 
         # Attempt to update or create the ProjectModel instance, handling potential exceptions
         try:
+            kwargs = {k: v for k, v in kwargs.items() if not pd.isna(v)}
             model_row, created = ProjectModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
             if created:
                 logger.debug(f"[created instance] {model_row.name}")
@@ -84,7 +85,7 @@ class ProjectModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)  # auto
     updated_at = models.DateTimeField(auto_now=True)  # auto
     # model manager
-    objects: models.Manager = ProjectModelManager()
+    objects = ProjectModelManager()
 
     def __str__(self) -> str:
         return self.name

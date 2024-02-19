@@ -1,12 +1,11 @@
 import logging
 import os
 from abc import ABC, abstractmethod
-from typing import Dict, Type
+from typing import Dict
 
 import pandas as pd
 from django.db import models
 
-from domain.export.base_export import BaseExport
 from domain.export.export_manager import ExportManager
 from model.core.project.models import ProjectModel
 from operators.excel_operator import ExcelOperator
@@ -19,7 +18,7 @@ class BaseReport(ABC):
         self.project = project
         self.export_manager = ExportManager(project)
 
-        self._export_data: Dict[str, Type[BaseExport]] = {}
+        self._export_data: Dict[str, pd.DataFrame] = {}
         self._report_base = pd.DataFrame()
         self._report_data = pd.DataFrame()
 
@@ -112,36 +111,68 @@ class BaseReport(ABC):
         fk_fields = self.model_class.objects.get_foreign_key_fields()
 
         for index, row in excel_data.iterrows():
-            query_kwargs = {}
-            update_fields = {}
+            query_kwargs: Dict[str, str] = {}
+            update_fields: Dict[str, str] = {}
 
             for field, value in row.items():
-                # Check if field is a foreign key that needs to be resolved
                 if field in fk_fields:
                     related_model = fk_fields[field]
                     related_model_manager = related_model.objects
-
-                    # Assume get_instance_id is available on the manager
                     fk_id = related_model_manager.get_instance_id(str(value))
                     if fk_id is not None:
-                        query_kwargs[field + "_id"] = fk_id  # Use the foreign key field with _id suffix for filtering
+                        query_kwargs[f"{field}_id"] = fk_id
                     else:
                         logger.warning(f"Could not find related instance for field '{field}' with value '{value}'")
-                        break  # Skip this row if any foreign key resolution fails
-                else:
-                    # For non-foreign key fields, prepare for direct update
+                        break
+                elif field in self.model_class.MANUAL_FIELDS and value:  # Check for non-empty manual field
                     update_fields[field] = value
 
             else:  # This else clause runs if no break occurs in the loop
-                db_entry = self.model_class.objects.filter(**query_kwargs).first()
-                if db_entry:
-                    for field, value in update_fields.items():
-                        setattr(db_entry, field, value)
-                    db_entry.save()
-                    logger.info(f"Updated database entry for {query_kwargs}")
-                else:
-                    # Handle the case where the entry doesn't exist; you might want to create a new instance
-                    logger.info(f"No entry found matching {query_kwargs}, consider creating a new instance")
+                if update_fields:  # Proceed only if there are non-empty manual fields to update
+                    db_entry = self.model_class.objects.filter(**query_kwargs).first()
+                    if db_entry:
+                        for field, value in update_fields.items():
+                            setattr(db_entry, field, value)
+                        db_entry.save()
+                        logger.info(f"Updated database entry for {query_kwargs}")
+                    else:
+                        logger.info(f"No entry found matching {query_kwargs}, consider creating a new instance")
+
+    # def _pull_updates_from_excel(self) -> None:
+    #     excel_data = self._excel_operator.pull_updates(self.report_name)
+    #     fk_fields = self.model_class.objects.get_foreign_key_fields()
+    #
+    #     for index, row in excel_data.iterrows():
+    #         query_kwargs: Dict[str, str] = {}
+    #         update_fields: Dict[str, str] = {}
+    #
+    #         for field, value in row.items():
+    #             # Check if field is a foreign key that needs to be resolved
+    #             if field in fk_fields:
+    #                 related_model = fk_fields[field]
+    #                 related_model_manager = related_model.objects
+    #
+    #                 # Assume get_instance_id is available on the manager
+    #                 fk_id = related_model_manager.get_instance_id(str(value))
+    #                 if fk_id is not None:
+    #                     query_kwargs[f"{field}_id"] = fk_id
+    #                 else:
+    #                     logger.warning(f"Could not find related instance for field '{field}' with value '{value}'")
+    #                     break  # Skip this row if any foreign key resolution fails
+    #             else:
+    #                 # For non-foreign key fields, prepare for direct update
+    #                 update_fields[field] = value
+    #
+    #         else:  # This else clause runs if no break occurs in the loop
+    #             db_entry = self.model_class.objects.filter(**query_kwargs).first()
+    #             if db_entry:
+    #                 for field, value in update_fields.items():
+    #                     setattr(db_entry, field, value)
+    #                 db_entry.save()
+    #                 logger.info(f"Updated database entry for {query_kwargs}")
+    #             else:
+    #                 # Handle the case where the entry doesn't exist; you might want to create a new instance
+    #                 logger.info(f"No entry found matching {query_kwargs}, consider creating a new instance")
 
     def _save_data(self) -> None:
         # get manually updated column values from the Excel file

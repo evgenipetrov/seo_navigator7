@@ -18,10 +18,14 @@ class ScreamingFrogSpiderCrawlExport(BaseScreamingfrogExport):
     def export_name(self) -> str:
         return self._EXPORT_NAME
 
+    def _set_crawl_config(self) -> None:
+        self._screamingfrog_operator.set_crawl_config(self._CRAWL_CONFIG)
+
+    def _set_export_tabs(self) -> None:
+        self._screamingfrog_operator.set_export_tabs(self._EXPORT_TABS)
+
     def _prepare(self) -> None:
         self._screamingfrog_operator.set_crawl_url(self.project.website.root_url.full_address)
-        self._screamingfrog_operator.set_crawl_config(self._CRAWL_CONFIG)
-        self._screamingfrog_operator.set_export_tabs(self._EXPORT_TABS)
 
     def _finalize(self) -> None:
         self._temp_data["IN_CRAWL"] = True

@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Tuple, List, Type
+from typing import Any, Dict, List, Tuple, Type
 
 from django.db import models
 

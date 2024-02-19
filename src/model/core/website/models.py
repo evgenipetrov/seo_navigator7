@@ -1,8 +1,9 @@
 import logging
 from typing import Any, Dict, List
 
+import pandas as pd
 from django.core.exceptions import ValidationError
-from django.db import models, IntegrityError
+from django.db import IntegrityError, models
 
 from model.base_model_manager import BaseModelManager
 from model.core.url.models import UrlModel
@@ -27,6 +28,7 @@ class WebsiteModelManager(BaseModelManager):
 
         # Attempt to update or create the WebsiteModel instance, handling potential exceptions
         try:
+            kwargs = {k: v for k, v in kwargs.items() if not pd.isna(v)}
             model_row, created = WebsiteModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
             if created:
                 logger.debug(f"[created instance] {model_row}")
@@ -77,7 +79,7 @@ class WebsiteModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)  # auto
     updated_at = models.DateTimeField(auto_now=True)  # auto
     # model manager
-    objects: models.Manager = WebsiteModelManager()
+    objects = WebsiteModelManager()
 
     def __str__(self) -> str:
         return self.root_url.full_address

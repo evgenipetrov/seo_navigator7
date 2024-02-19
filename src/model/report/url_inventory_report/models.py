@@ -1,8 +1,9 @@
 import logging
 from typing import Any, Dict, List
 
+import pandas as pd
 from django.core.exceptions import ValidationError
-from django.db import models, IntegrityError
+from django.db import IntegrityError, models
 
 from model.base_model_manager import BaseModelManager
 from model.core.project.models import ProjectModel
@@ -46,6 +47,7 @@ class UrlInventoryReportModelManager(BaseModelManager):
 
         # Attempt to update or create the UrlInventoryReportModel instance, handling potential exceptions
         try:
+            kwargs = {k: v for k, v in kwargs.items() if not pd.isna(v)}
             model_row, created = UrlInventoryReportModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
             if created:
                 logger.info(f"[created instance] {model_row}")
@@ -102,7 +104,7 @@ class UrlInventoryReportModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)  # auto
     updated_at = models.DateTimeField(auto_now=True)  # auto
     # model manager
-    objects: models.Manager = UrlInventoryReportModelManager()
+    objects = UrlInventoryReportModelManager()
 
     def __str__(self) -> str:
         return f"RawPageDataModel: request_url = {self.request_url.full_address}"

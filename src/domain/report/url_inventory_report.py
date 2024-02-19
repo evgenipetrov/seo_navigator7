@@ -5,7 +5,7 @@ import pandas as pd
 from domain.report.base_report import BaseReport
 from model.core.project.models import ProjectModel
 from model.core.url.models import UrlModelManager
-from model.report.url_inventory_report.models import UrlInventoryReportModelManager, UrlInventoryReportModel
+from model.report.url_inventory_report.models import UrlInventoryReportModel
 
 logger = logging.getLogger(__name__)
 
@@ -89,9 +89,9 @@ class UrlInventoryReport(BaseReport):
         for index, row in self._report_data.iterrows():
             arguments = row.to_dict()
             arguments["project"] = self.project
-            UrlInventoryReportModelManager.push(**arguments)
-            # self.model_class.objects.push(**arguments)
-            logger.info(f"[database updated] {self.project.name}")
+            # UrlInventoryReportModelManager.push(**arguments)
+            self.model_class.objects.push(**arguments)
+        logger.info(f"[database updated] {self.project.name}")
 
     # def _pull_updates_from_excel(self) -> None:
     #     excel_data = self._excel_operator.pull_updates(self.report_name)
