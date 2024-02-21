@@ -41,3 +41,44 @@ class DataFrameOperator:
                 # Convert timezone-aware datetime objects to naive ones (without timezone)
                 df[column] = df[column].apply(lambda x: x.replace(tzinfo=None) if pd.notnull(x) else x)
         return df
+
+    # @staticmethod
+    # def update_df_from_df(df_to_update, df_update_from, left_on, right_on):
+    #     # Merge df_to_update with df_update_from on matching columns
+    #     merged_df = df_to_update.merge(df_update_from, left_on=left_on, right_on=right_on, how="left", suffixes=("", "_update"))
+    #
+    #     # Iterate through columns to update df_to_update from df_update_from
+    #     for col in merged_df.columns:
+    #         if col.endswith("_update"):
+    #             # Determine the original column name by removing '_update' suffix
+    #             original_col = col[:-7]  # '_update' is 7 characters long
+    #
+    #             # Check if the original column exists in df_to_update
+    #             if original_col in df_to_update.columns:
+    #                 # Update df_to_update with values from the merged DataFrame
+    #                 # Prefer values from the '_update' column, falling back to the original where '_update' is NaN
+    #                 df_to_update[original_col] = merged_df[col].combine_first(merged_df[original_col])
+    #
+    #     return df_to_update
+    @staticmethod
+    def update_df_from_df(df_to_update, df_update_from, left_on, right_on, column_mapper=None):
+        # Merge df_to_update with df_update_from on matching columns
+        merged_df = df_to_update.merge(df_update_from, left_on=left_on, right_on=right_on, how="left", suffixes=("", "_update"))
+
+        # If column_mapper is provided, use it to update specified columns
+        if column_mapper:
+            for original_col, update_col in column_mapper.items():
+                if original_col == update_col:
+                    update_col += "_update"  # Add the '_update' suffix to the update_col
+                if original_col in df_to_update.columns and update_col in merged_df.columns:
+                    df_to_update[original_col] = merged_df[update_col].combine_first(merged_df[original_col])
+        else:
+            # Iterate through columns to update df_to_update from df_update_from
+            for col in merged_df.columns:
+                if col.endswith("_update"):
+                    # Determine the original column name by removing '_update' suffix
+                    original_col = col[:-7]  # '_update' is 7 characters long
+                    # Update df_to_update with values from the merged DataFrame
+                    # Prefer values from the '_update' column, falling back to the original where '_update' is NaN
+                    df_to_update[original_col] = merged_df[col].combine_first(merged_df[original_col])
+        return df_to_update

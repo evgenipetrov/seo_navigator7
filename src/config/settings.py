@@ -49,7 +49,9 @@ INSTALLED_APPS = [
     "model.core.project",
     "model.core.website",
     "model.core.url",
+    "model.core.topic",
     "model.report.url_inventory_report",
+    "model.report.emerging_query_report",
 ]
 
 MIDDLEWARE = [
@@ -140,7 +142,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "handlers": {
         "console": {
-            "level": "INFO",
+            "level": "DEBUG",
             "class": "logging.StreamHandler",
             "stream": sys.stdout,
         },
@@ -159,7 +161,7 @@ LOGGING = {
 SECRETS_DIR_NAME = os.getenv("SECRETS_DIR_NAME", "secrets")
 SECRETS_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", SECRETS_DIR_NAME))
 
-MAX_EXPORT_AGE_DAYS = 1
+MAX_EXPORT_AGE_DAYS = int(os.getenv("MAX_EXPORT_AGE_DAYS", 1))
 
 SCREAMINGFROG_IMAGE_NAME = os.getenv("DOCKER_IMAGE_NAME", "screamingfrog")
 SCREAMINGFROG_IMAGE_TAG = os.getenv("SEO_SPIDER_VERSION", "latest")

@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="UrlModel",
+            name="TopicModel",
             fields=[
                 (
                     "id",
@@ -22,12 +22,12 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("full_address", models.URLField(unique=True)),
+                ("phrase", models.CharField(max_length=255, unique=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
             ],
             options={
-                "db_table": "core_urls",
+                "db_table": "core_topics",
             },
         ),
     ]

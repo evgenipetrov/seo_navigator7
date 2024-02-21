@@ -49,7 +49,7 @@ class ExcelOperator:
         headers = [cell.value for cell in next(sheet.iter_rows(min_row=1, max_row=1))]
 
         # Get the identifying fields from the model class
-        identifying_fields = model_class.IDENTIFYING_FIELDS
+        identifying_fields = model_class.objects.get_identifying_fields()
 
         # Create a mapping of composite keys to Excel row numbers
         composite_key_to_row = {}
@@ -95,7 +95,7 @@ class ExcelOperator:
         """Cross out rows in the Excel sheet identified for deletion."""
         sheet = self._workbook[sheet_name]
         headers = [cell.value for cell in next(sheet.iter_rows(min_row=1, max_row=1))]
-        identifying_fields = model_class.IDENTIFYING_FIELDS
+        identifying_fields = model_class.objects.get_identifying_fields()
 
         # Iterate over the DataFrame rows to find and cross out the corresponding rows in the Excel sheet
         for _, row in rows_to_delete.iterrows():
@@ -119,7 +119,7 @@ class ExcelOperator:
         old_data = pd.read_excel(self.file_path, sheet_name=sheet_name)
 
         # Define unique fields for merging; these should be the identifying fields of your model
-        unique_fields = model_class.IDENTIFYING_FIELDS
+        unique_fields = model_class.objects.get_identifying_fields()
 
         # If the sheet exists and has data, categorize updates
         if not old_data.empty:
@@ -165,8 +165,9 @@ class ExcelOperator:
 
         self._workbook.save(self.file_path)
 
-    def pull_updates(self, sheet_name: str) -> pd.DataFrame:
+    def pull_updates(self, sheet_name: str, model_class) -> pd.DataFrame:
         """Read data from an Excel sheet and return it as a DataFrame."""
+        self._validate_worksheet(sheet_name, model_class.objects.get_field_names())
         sheet = self._workbook[sheet_name]
         data = pd.DataFrame(sheet.values)
         data.columns = data.iloc[0]

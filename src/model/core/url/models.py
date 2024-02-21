@@ -1,10 +1,8 @@
 import logging
-from typing import Any, Dict, List
+from typing import List
 from urllib.parse import urljoin, urlparse
 
-import pandas as pd
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError, models
+from django.db import models
 
 from model.base_model_manager import BaseModelManager
 
@@ -13,44 +11,36 @@ logger = logging.getLogger(__name__)
 
 class UrlModelManager(BaseModelManager):
 
-    @staticmethod
-    def push(**kwargs: Dict[str, Any]) -> "UrlModel":
-        # Validate identifying fields
-        identifying_fields = {field: kwargs.pop(field) for field in UrlModel.IDENTIFYING_FIELDS if field in kwargs}
-        for field, value in identifying_fields.items():
-            if value is None or pd.isna(value):  # Using pandas to check for NaN
-                logger.error(f"Invalid identifying field '{field}' with value '{value}'")
-                return None  # Or handle this case as appropriate
-
-        # Handle missing identifying fields
-        if not identifying_fields:
-            logger.error("No identifying fields provided for UrlModel")
-            return None  # Or handle this case as appropriately
-
-        # Attempt to update or create the UrlModel instance, handling potential exceptions
-        try:
-            kwargs = {k: v for k, v in kwargs.items() if not pd.isna(v)}
-            model_row, created = UrlModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
-            if created:
-                logger.debug(f"[created instance] {model_row.full_address}")
-            else:
-                logger.debug(f"[updated instance] {model_row.full_address}")
-            return model_row
-        except IntegrityError as e:
-            logger.error(f"Integrity error while pushing UrlModel: {e}")
-        except ValidationError as e:
-            logger.error(f"Validation error while pushing UrlModel: {e}")
-        except Exception as e:
-            logger.error(f"Unexpected error while pushing UrlModel: {e}")
-
-        return None  # Or handle this case as appropriately
-
-    def get_manual_fields(self):
-        pass
-
-    def get_identifying_fields(self) -> List[str]:
-        identifying_fields = self.model.IDENTIFYING_FIELDS
-        return identifying_fields
+    # @staticmethod
+    # def push(**kwargs: Dict[str, Any]) -> "UrlModel":
+    #     # Validate identifying fields
+    #     identifying_fields = {field: kwargs.pop(field) for field in UrlModel.IDENTIFYING_FIELDS if field in kwargs}
+    #     for field, value in identifying_fields.items():
+    #         if value is None or pd.isna(value):  # Using pandas to check for NaN
+    #             logger.error(f"Invalid identifying field '{field}' with value '{value}'")
+    #             return None  # Or handle this case as appropriate
+    #
+    #     # Handle missing identifying fields
+    #     if not identifying_fields:
+    #         logger.error("No identifying fields provided for UrlModel")
+    #         return None  # Or handle this case as appropriately
+    #
+    #     try:
+    #         kwargs = {k: v for k, v in kwargs.items() if not pd.isna(v)}
+    #         model_row, created = UrlModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+    #         if created:
+    #             logger.debug(f"[created instance] {model_row.full_address}")
+    #         else:
+    #             logger.debug(f"[updated instance] {model_row.full_address}")
+    #         return model_row
+    #     except IntegrityError as e:
+    #         logger.error(f"Integrity error while pushing UrlModel: {e}")
+    #     except ValidationError as e:
+    #         logger.error(f"Validation error while pushing UrlModel: {e}")
+    #     except Exception as e:
+    #         logger.error(f"Unexpected error while pushing UrlModel: {e}")
+    #
+    #     return None  # Or handle this case as appropriately
 
     def get_field_names(self) -> List[str]:
         return [field.name for field in UrlModel._meta.fields]
@@ -73,16 +63,23 @@ class UrlModelManager(BaseModelManager):
     def is_fragmented(url: str) -> bool:
         return bool(urlparse(url).fragment)
 
-    def get_instance_id(self, instance_str: str) -> int:
+    def get_instance(self, data) -> int:
+        if "root_url" in data:
+            data["full_address"] = data.pop("root_url")
+        if "sitemap_url" in data:
+            data["full_address"] = data.pop("sitemap_url")
+
+        kwargs = {k: v for k, v in data.items() if v is not None}
         try:
-            return self.model.objects.get(full_address=instance_str).id
+            return self.model.objects.push(**kwargs)
         except self.model.DoesNotExist:
-            logger.error(f"UrlModel instance with full_address '{instance_str}' does not exist.")
+            full_address = data.get("full_address")
+            logger.error(f"UrlModel instance with full_address '{full_address}' does not exist.")
             return None
 
 
 class UrlModel(models.Model):
-    IDENTIFYING_FIELDS = [
+    _IDENTIFYING_FIELDS = [
         "full_address",
     ]
     # required relations
@@ -99,7 +96,4 @@ class UrlModel(models.Model):
         return self.full_address
 
     class Meta:
-        verbose_name = "Url"
-        verbose_name_plural = "Urls"
-
         db_table = "core_urls"

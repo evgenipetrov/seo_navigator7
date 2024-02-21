@@ -1,9 +1,6 @@
 import logging
-from typing import Any, Dict, List
 
-import pandas as pd
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError, models
+from django.db import models
 
 from model.base_model_manager import BaseModelManager
 from model.core.url.models import UrlModel
@@ -12,62 +9,60 @@ logger = logging.getLogger(__name__)
 
 
 class WebsiteModelManager(BaseModelManager):
-    @staticmethod
-    def push(**kwargs: Dict[str, Any]) -> "WebsiteModel":
-        # Validate identifying fields
-        identifying_fields = {field: kwargs.pop(field) for field in WebsiteModel.IDENTIFYING_FIELDS if field in kwargs}
-        for field, value in identifying_fields.items():
-            if value is None or pd.isna(value):  # Using pandas to check for NaN
-                logger.error(f"Invalid identifying field '{field}' with value '{value}'")
-                return None  # Or handle this case as appropriate
-
-        # Handle missing identifying fields
-        if not identifying_fields:
-            logger.error("No identifying fields provided for WebsiteModel")
-            return None  # Or handle this case as appropriate
-
-        # Attempt to update or create the WebsiteModel instance, handling potential exceptions
-        try:
-            kwargs = {k: v for k, v in kwargs.items() if not pd.isna(v)}
-            model_row, created = WebsiteModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
-            if created:
-                logger.debug(f"[created instance] {model_row}")
-            else:
-                logger.debug(f"[updated instance] {model_row}")
-            return model_row
-        except IntegrityError as e:
-            logger.error(f"Integrity error while pushing WebsiteModel: {e}")
-        except ValidationError as e:
-            logger.error(f"Validation error while pushing WebsiteModel: {e}")
-        except Exception as e:
-            logger.error(f"Unexpected error while pushing WebsiteModel: {e}")
-
-        return None  # Or handle this case as appropriate
-
-    def get_manual_fields(self):
-        pass
-
-    def get_identifying_fields(self) -> List[str]:
-        identifying_fields = self.model.IDENTIFYING_FIELDS
-        return identifying_fields
-
-    def get_field_names(self) -> List[str]:
-        return [field.name for field in WebsiteModel._meta.fields]
+    # @staticmethod
+    # def push(**kwargs: Dict[str, Any]) -> "WebsiteModel":
+    #     # Validate identifying fields
+    #     identifying_fields = {field: kwargs.pop(field) for field in WebsiteModel.IDENTIFYING_FIELDS if field in kwargs}
+    #     for field, value in identifying_fields.items():
+    #         if value is None or pd.isna(value):  # Using pandas to check for NaN
+    #             logger.error(f"Invalid identifying field '{field}' with value '{value}'")
+    #             return None  # Or handle this case as appropriate
+    #
+    #     # Handle missing identifying fields
+    #     if not identifying_fields:
+    #         logger.error("No identifying fields provided for WebsiteModel")
+    #         return None  # Or handle this case as appropriate
+    #
+    #     # Attempt to update or create the WebsiteModel instance, handling potential exceptions
+    #     try:
+    #         kwargs = {k: v for k, v in kwargs.items() if not pd.isna(v)}
+    #         model_row, created = WebsiteModel.objects.update_or_create(defaults=kwargs, **identifying_fields)
+    #         if created:
+    #             logger.debug(f"[created instance] {model_row}")
+    #         else:
+    #             logger.debug(f"[updated instance] {model_row}")
+    #         return model_row
+    #     except IntegrityError as e:
+    #         logger.error(f"Integrity error while pushing WebsiteModel: {e}")
+    #     except ValidationError as e:
+    #         logger.error(f"Validation error while pushing WebsiteModel: {e}")
+    #     except Exception as e:
+    #         logger.error(f"Unexpected error while pushing WebsiteModel: {e}")
+    #
+    #     return None  # Or handle this case as appropriate
+    #
+    # def get_field_names(self) -> List[str]:
+    #     return [field.name for field in WebsiteModel._meta.fields]
 
     @staticmethod
     def get_all() -> models.QuerySet:
         return WebsiteModel.objects.all()
 
-    def get_instance_id(self, instance_str: str) -> int:
+    def get_instance(self, data) -> int:
+        if "website" in data:
+            data["root_url"] = data.pop("website")
+
+        kwargs = {k: v for k, v in data.items() if v is not None}
         try:
-            return self.model.objects.get(root_url__full_address=instance_str).id
+            return self.model.objects.push(**kwargs)
         except self.model.DoesNotExist:
-            logger.error(f"WebsiteModel instance with root_url '{instance_str}' does not exist.")
+            root_url = data.get("root_url")
+            logger.error(f"WebsiteModel instance with root_url '{root_url}' does not exist.")
             return None
 
 
 class WebsiteModel(models.Model):
-    IDENTIFYING_FIELDS = [
+    _IDENTIFYING_FIELDS = [
         "root_url",
     ]
     # required relations

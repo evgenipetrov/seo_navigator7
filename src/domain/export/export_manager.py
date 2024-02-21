@@ -6,6 +6,10 @@ import pandas as pd
 from domain.export.base_export import BaseExport
 from domain.export.googleanalytics.googleanalytics_months_14_to_0_export import GoogleAnalyticsMonths14To0Export
 from domain.export.googlesearchconsole.googleasearchconsole_page_months_16_to_0_export import GoogleSearchConsolePageMonths16To0Export
+from domain.export.googlesearchconsole.googleasearchconsole_query_page_months_16_to_1_export import GoogleSearchConsoleQueryPageMonths16To1Export
+from domain.export.googlesearchconsole.googleasearchconsole_query_page_months_1_to_0_export import GoogleSearchConsoleQueryPageMonths1To0Export
+from domain.export.googlesearchconsole.googleasearchconsole_query_page_weeks_1_to_0_export import GoogleSearchConsoleQueryPageWeeks1To0Export
+from domain.export.googlesearchconsole.googleasearchconsole_query_page_weeks_78_to_1_export import GoogleSearchConsoleQueryPageWeeks78To1Export
 from domain.export.page.raw_page_data_export import RawPageDataExport
 from domain.export.screamingfrog.screamingfrog_list_crawl_export import ScreamingFrogListCrawlExport
 from domain.export.screamingfrog.screamingfrog_sitemap_crawl_export import ScreamingFrogSitemapCrawlExport
@@ -30,6 +34,10 @@ class ExportManager:
         "screamingfrog_list_crawl_export": ScreamingFrogListCrawlExport,
         "googleanalytics_months_14_to_0_export": GoogleAnalyticsMonths14To0Export,
         "googleasearchconsole_page_months_16_to_0_export": GoogleSearchConsolePageMonths16To0Export,
+        "googleasearchconsole_query_page_months_16_to_1_export": GoogleSearchConsoleQueryPageMonths16To1Export,
+        "googleasearchconsole_query_page_months_1_to_0_export": GoogleSearchConsoleQueryPageMonths1To0Export,
+        "googleasearchconsole_query_page_weeks_78_to_1_export": GoogleSearchConsoleQueryPageWeeks78To1Export,
+        "googleasearchconsole_query_page_weeks_1_to_0_export": GoogleSearchConsoleQueryPageWeeks1To0Export,
         # Add more exports as needed
     }
 

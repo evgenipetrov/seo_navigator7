@@ -1,31 +1,31 @@
 import logging
-from typing import Any, Dict
+from typing import Dict, Any
 
-import pandas as pd
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError, models
+from django.db import models
 
 from model.base_model_manager import BaseModelManager
-from model.core.project.models import ProjectModel
-from model.core.url.models import UrlModel, UrlModelManager
+from model.core.project.models import ProjectModel  # Replace with your model
+from model.core.topic.models import TopicModel, TopicModelManager
+from model.core.url.models import UrlModel
 
 logger = logging.getLogger(__name__)
 
 
-class UrlInventoryReportModelManager(BaseModelManager):
+class EmergingQueryReportModelManager(BaseModelManager):
+
     @staticmethod
-    def push(**kwargs: Dict[str, Any]) -> "UrlInventoryReportModel":
-        # Validate 'request_url'
-        request_url = kwargs.pop("request_url", None)
-        if request_url is None:
-            logger.error("No 'request_url' provided to push method")
+    def push(**kwargs: Dict[str, Any]) -> "EmergingQueryReportModel":
+        # Validate key column
+        topic = kwargs.pop("topic", None)
+        if topic is None:
+            logger.error("No 'topic' provided to push method")
             return None
 
-        request_url_model = UrlModelManager.push(full_address=request_url)
-        if request_url_model is None:
-            logger.error(f"Failed to obtain 'UrlModel' for request_url: {request_url}")
+        topic = TopicModelManager.push(phrase=topic)
+        if topic is None:
+            logger.error(f"Failed to obtain 'TopicModel' for topic: {topic}")
             return None
-        kwargs["request_url"] = request_url_model
+        kwargs["topic"] = topic
 
         # Validate 'response_url'
         response_url = kwargs.pop("response_url", None)
@@ -62,19 +62,14 @@ class UrlInventoryReportModelManager(BaseModelManager):
 
         return None
 
-    @staticmethod
-    def get_all() -> models.QuerySet:
-        return UrlInventoryReportModel.objects.all()
-
     def get_instance(self, instance_str: str) -> int:
-        try:
-            return self.model.objects.get(request_url__full_address=instance_str).id
-        except self.model.DoesNotExist:
-            logger.error(f"URLInventoryReportModel instance with request_url '{instance_str}' does not exist.")
-            return None
+        pass
+
+    def get_all(self) -> models.QuerySet:
+        return self.model.objects.all()
 
 
-class UrlInventoryReportModel(models.Model):
+class EmergingQueryReportModel(models.Model):
     # List of column names that are updated manually by users. These fields might require
     # special handling during data import/export or synchronization processes.
     _MANUAL_FIELDS = [
@@ -82,30 +77,34 @@ class UrlInventoryReportModel(models.Model):
     ]
     _IDENTIFYING_FIELDS = [
         "project",
-        "request_url",
+        "topic",
     ]
     # required relations
-    project = models.ForeignKey(ProjectModel, on_delete=models.CASCADE)
-    request_url = models.ForeignKey(UrlModel, on_delete=models.CASCADE, related_name="request_url")
-    response_url = models.ForeignKey(UrlModel, on_delete=models.CASCADE, related_name="response_url")
+    project = models.ForeignKey(ProjectModel, on_delete=models.CASCADE, blank=True, null=True)
+    topic = models.ForeignKey(TopicModel, on_delete=models.CASCADE, blank=True, null=True)
+    url_last_week = models.ForeignKey(UrlModel, on_delete=models.CASCADE, blank=True, null=True, related_name="page_query_last_week")
+    url_last_month = models.ForeignKey(UrlModel, on_delete=models.CASCADE, blank=True, null=True, related_name="page_query_last_month")
     # required fields
-    status_code = models.IntegerField()
+    impressions_last_week = models.IntegerField(blank=True, null=True)
+    clicks_last_week = models.IntegerField(blank=True, null=True)
+    ctr_last_week = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    position_last_week = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    impressions_last_month = models.IntegerField(blank=True, null=True)
+    clicks_last_month = models.IntegerField(blank=True, null=True)
+    ctr_last_month = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    position_last_month = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    from_last_week = models.BooleanField(default=False)
+    from_last_month = models.BooleanField(default=False)
     # optional fields
-    page_content_file = models.CharField(max_length=255, blank=True, null=True)
     note = models.CharField(max_length=255, blank=True, null=True)
     # system attributes
     created_at = models.DateTimeField(auto_now_add=True)  # auto
     updated_at = models.DateTimeField(auto_now=True)  # auto
     # model manager
-    objects = UrlInventoryReportModelManager()
+    objects = EmergingQueryReportModelManager()
 
     def __str__(self) -> str:
-        return f"RawPageDataModel: request_url = {self.request_url.full_address}"
+        return f"NewModel: project = {self.project.name}"
 
     class Meta:
-        db_table = "report_raw_page_data"
-
-        unique_together = (
-            "project",
-            "request_url",
-        )
+        db_table = "report_emerging_query"

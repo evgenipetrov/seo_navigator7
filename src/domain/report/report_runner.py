@@ -1,9 +1,11 @@
+from domain.report.emerging_query_report import EmergingTopicsReport
 from domain.report.url_inventory_report import UrlInventoryReport
 from model.core.project.models import ProjectModel
 
 # Register your report classes in a dictionary
 report_classes = {
     "url_inventory": UrlInventoryReport,
+    "emerging_topics": EmergingTopicsReport,
 }
 
 

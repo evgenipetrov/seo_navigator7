@@ -3,12 +3,12 @@ from typing import List
 from domain.export.googlesearchconsole.base_googlesearchconsole_export import BaseGoogleSearchConsoleExport
 
 
-class GoogleSearchConsolePageMonths16To0Export(BaseGoogleSearchConsoleExport):
-    _EXPORT_NAME = "googlesearchconsole_page_months_16_to_0"
+class GoogleSearchConsoleQueryPageMonths16To1Export(BaseGoogleSearchConsoleExport):
+    _EXPORT_NAME = "googlesearchconsole_query_page_months_16_to_1"
     _MEASUREMENT_UNIT = "months"
     _BEGIN = 16  # period begins _BEGIN _MEASUREMENT_UNIT ago
-    _END = 0  # period ends _END _MEASUREMENT_UNIT ago
-    _DIMENSIONS: List[str] = ["page"]
+    _END = 1  # period ends _END _MEASUREMENT_UNIT ago
+    _DIMENSIONS: List[str] = ["query", "page"]
 
     @property
     def export_name(self) -> str:

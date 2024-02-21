@@ -43,27 +43,22 @@ class BaseReport(ABC):
     @abstractmethod
     def _collect_data(self) -> None:
         """Execute ExportRunner to collect data, storing results in self.collected_data."""
-        # Example: self.collected_data = self.export_runner.run_exports([...])
 
     @abstractmethod
     def _prepare_data(self) -> None:
         """Prepare self.collected_data for processing, storing results in self.prepared_data."""
-        # Example: self.prepared_data = some_preparation_function(self.collected_data)
 
     @abstractmethod
     def _process_data(self) -> None:
         """Process self.prepared_data to generate the report's results, storing in self.processed_data."""
-        # Example: self.processed_data = some_processing_function(self.prepared_data)
 
     @abstractmethod
     def _finalize(self) -> None:
         """Perform any final processing or cleanup of self.processed_data."""
-        # Example: self.processed_data = some_final_processing_function(self.processed_data)
 
     @abstractmethod
     def _update_db(self) -> None:
         """Save self.processed_data, the final results of the report."""
-        # Example: save_to_database(self.processed_data)
 
     def _dump_report(self) -> None:
         self._report_data.to_csv(self.save_path, index=False)
@@ -107,7 +102,7 @@ class BaseReport(ABC):
         logger.info(f"[master_sheet updated] {self.save_path}")
 
     def _pull_updates_from_excel(self) -> None:
-        excel_data = self._excel_operator.pull_updates(self.report_name)
+        excel_data = self._excel_operator.pull_updates(self.report_name, self.model_class)
         fk_fields = self.model_class.objects.get_foreign_key_fields()
 
         for index, row in excel_data.iterrows():
@@ -118,13 +113,13 @@ class BaseReport(ABC):
                 if field in fk_fields:
                     related_model = fk_fields[field]
                     related_model_manager = related_model.objects
-                    fk_id = related_model_manager.get_instance_id(str(value))
+                    fk_id = related_model_manager.get_instance(str(value))
                     if fk_id is not None:
                         query_kwargs[f"{field}_id"] = fk_id
                     else:
                         logger.warning(f"Could not find related instance for field '{field}' with value '{value}'")
                         break
-                elif field in self.model_class.MANUAL_FIELDS and value:  # Check for non-empty manual field
+                elif field in self.model_class.objects.get_manual_fields() and value:  # Check for non-empty manual field
                     update_fields[field] = value
 
             else:  # This else clause runs if no break occurs in the loop
@@ -137,42 +132,6 @@ class BaseReport(ABC):
                         logger.info(f"Updated database entry for {query_kwargs}")
                     else:
                         logger.info(f"No entry found matching {query_kwargs}, consider creating a new instance")
-
-    # def _pull_updates_from_excel(self) -> None:
-    #     excel_data = self._excel_operator.pull_updates(self.report_name)
-    #     fk_fields = self.model_class.objects.get_foreign_key_fields()
-    #
-    #     for index, row in excel_data.iterrows():
-    #         query_kwargs: Dict[str, str] = {}
-    #         update_fields: Dict[str, str] = {}
-    #
-    #         for field, value in row.items():
-    #             # Check if field is a foreign key that needs to be resolved
-    #             if field in fk_fields:
-    #                 related_model = fk_fields[field]
-    #                 related_model_manager = related_model.objects
-    #
-    #                 # Assume get_instance_id is available on the manager
-    #                 fk_id = related_model_manager.get_instance_id(str(value))
-    #                 if fk_id is not None:
-    #                     query_kwargs[f"{field}_id"] = fk_id
-    #                 else:
-    #                     logger.warning(f"Could not find related instance for field '{field}' with value '{value}'")
-    #                     break  # Skip this row if any foreign key resolution fails
-    #             else:
-    #                 # For non-foreign key fields, prepare for direct update
-    #                 update_fields[field] = value
-    #
-    #         else:  # This else clause runs if no break occurs in the loop
-    #             db_entry = self.model_class.objects.filter(**query_kwargs).first()
-    #             if db_entry:
-    #                 for field, value in update_fields.items():
-    #                     setattr(db_entry, field, value)
-    #                 db_entry.save()
-    #                 logger.info(f"Updated database entry for {query_kwargs}")
-    #             else:
-    #                 # Handle the case where the entry doesn't exist; you might want to create a new instance
-    #                 logger.info(f"No entry found matching {query_kwargs}, consider creating a new instance")
 
     def _save_data(self) -> None:
         # get manually updated column values from the Excel file
